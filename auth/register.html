@@ -1,0 +1,1370 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Register — Project Management System</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --bg-deep:      #040d1a;
+      --bg-mid:       #071428;
+      --bg-card:      rgba(8, 22, 46, 0.72);
+      --border-card:  rgba(0, 200, 255, 0.12);
+      --cyan:         #00c8ff;
+      --cyan-dim:     rgba(0, 200, 255, 0.18);
+      --cyan-glow:    rgba(0, 200, 255, 0.35);
+      --blue:         #0072c6;
+      --blue-bright:  #1a8fe3;
+      --text:         #e2eaf4;
+      --text-dim:     #7a90a8;
+      --text-muted:   #3d5068;
+      --success:      #00e5a0;
+      --error:        #ff4d6d;
+      --warn:         #f59e0b;
+      --input-bg:     rgba(0, 30, 60, 0.55);
+      --input-border: rgba(0, 160, 220, 0.22);
+      --radius:       14px;
+      --radius-sm:    8px;
+      --font-display: 'Outfit', sans-serif;
+      --font-mono:    'DM Mono', monospace;
+      --transition:   0.32s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+
+    html, body {
+      height: 100%;
+      margin: 0;
+      font-family: var(--font-display);
+      background: var(--bg-deep);
+      color: var(--text);
+      overflow: hidden; /* page-wrapper handles scroll */
+    }
+
+    /* Hide ALL scrollbars everywhere — tapi tetap scrollable */
+    * { scrollbar-width: none; -ms-overflow-style: none; }
+    *::-webkit-scrollbar { display: none; }
+
+    /* ── Canvas & Blobs ── */
+    #bg-canvas {
+      position: fixed; inset: 0;
+      z-index: 0; pointer-events: none;
+    }
+
+    .blob {
+      position: fixed; border-radius: 50%;
+      filter: blur(90px); pointer-events: none;
+      z-index: 0; animation: blobFloat 14s ease-in-out infinite;
+    }
+    .blob-1 {
+      width: 520px; height: 520px;
+      background: radial-gradient(circle, rgba(0,114,198,0.18) 0%, transparent 70%);
+      top: -140px; right: -100px; animation-duration: 18s;
+    }
+    .blob-2 {
+      width: 380px; height: 380px;
+      background: radial-gradient(circle, rgba(0,200,255,0.12) 0%, transparent 70%);
+      bottom: -80px; left: -60px;
+      animation-duration: 22s; animation-delay: -9s;
+    }
+    .blob-3 {
+      width: 260px; height: 260px;
+      background: radial-gradient(circle, rgba(0,229,160,0.07) 0%, transparent 70%);
+      top: 40%; right: 30%;
+      animation-duration: 26s; animation-delay: -5s;
+    }
+
+    @keyframes blobFloat {
+      0%, 100% { transform: translate(0,0) scale(1); }
+      33%       { transform: translate(-28px, 18px) scale(1.04); }
+      66%       { transform: translate(18px, -22px) scale(0.97); }
+    }
+
+    /* ── Page Wrapper ── */
+    .page-wrapper {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      overflow-y: auto;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 24px 16px 40px;
+    }
+
+    /* ── Card ── */
+    .register-row {
+      width: 100%;
+      max-width: 1080px;
+      /* Tidak pakai min-height fixed — biar konten yang tentukan tinggi */
+      background: var(--bg-card);
+      backdrop-filter: blur(24px) saturate(1.4);
+      -webkit-backdrop-filter: blur(24px) saturate(1.4);
+      border: 1px solid var(--border-card);
+      border-radius: 24px;
+      overflow: hidden;
+      box-shadow:
+        0 0 0 1px rgba(0,200,255,0.06),
+        0 32px 80px rgba(0,0,0,0.55),
+        0 0 120px rgba(0,114,198,0.12);
+      animation: cardEntrance 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+      /* Di desktop: card mengisi viewport height — form scroll di dalam */
+      height: calc(100vh - 48px);
+      align-self: flex-start;
+    }
+
+    /* Di desktop: kedua panel mengisi tinggi card penuh */
+    .register-row > .col-lg-5,
+    .register-row > .col-lg-7 {
+      height: 100%;
+    }
+
+    @keyframes cardEntrance {
+      from { opacity: 0; transform: translateY(32px) scale(0.97); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    /* ── Brand Panel ── */
+    .brand-panel {
+      background: linear-gradient(145deg,
+        rgba(0,30,70,0.9) 0%,
+        rgba(0,15,40,0.95) 100%);
+      border-right: 1px solid var(--border-card);
+      padding: 52px 40px;
+      display: flex; flex-direction: column; justify-content: space-between;
+      position: relative; overflow: hidden;
+      /* Desktop: panel kiri bisa scroll jika konten terlalu panjang */
+      overflow-y: auto;
+    }
+
+    .brand-panel::before {
+      content: '';
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(rgba(0,200,255,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,200,255,0.04) 1px, transparent 1px);
+      background-size: 32px 32px;
+      pointer-events: none;
+    }
+
+    .brand-panel::after {
+      content: '';
+      position: absolute;
+      top: -60px; right: -60px;
+      width: 320px; height: 320px;
+      background: radial-gradient(circle, rgba(0,200,255,0.07) 0%, transparent 65%);
+      pointer-events: none;
+    }
+
+    .brand-logo {
+      display: flex; align-items: center; gap: 12px;
+      animation: fadeSlideIn 0.6s 0.2s both;
+    }
+
+    .logo-icon {
+      width: 46px; height: 46px;
+      background: linear-gradient(135deg, var(--cyan) 0%, var(--blue) 100%);
+      border-radius: 12px;
+      display: grid; place-items: center;
+      font-size: 22px; color: #fff;
+      box-shadow: 0 0 24px var(--cyan-glow);
+      position: relative; overflow: hidden;
+    }
+    .logo-icon::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.25) 0%, transparent 60%);
+      border-radius: inherit;
+    }
+
+    .logo-text {
+      font-family: var(--font-mono);
+      font-size: 13px; font-weight: 500;
+      color: var(--text-dim); line-height: 1.3;
+    }
+    .logo-text strong {
+      display: block; font-size: 16px;
+      color: var(--text); letter-spacing: 0.02em;
+    }
+
+    .brand-headline {
+      position: relative; z-index: 1;
+      animation: fadeSlideIn 0.6s 0.4s both;
+    }
+
+    .brand-tag {
+      font-family: var(--font-mono);
+      font-size: 11px; color: var(--cyan);
+      letter-spacing: 2px; text-transform: uppercase;
+      margin-bottom: 16px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .brand-tag::before {
+      content: '';
+      display: inline-block;
+      width: 24px; height: 1px;
+      background: var(--cyan); opacity: 0.6;
+    }
+
+    .brand-headline h2 {
+      font-family: var(--font-display);
+      font-size: clamp(24px, 2.8vw, 34px);
+      font-weight: 800; line-height: 1.25;
+      color: var(--text); margin-bottom: 14px;
+    }
+    .brand-headline h2 span {
+      background: linear-gradient(90deg, var(--cyan), var(--blue-bright));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .brand-headline p {
+      font-size: 13.5px; color: var(--text-dim);
+      line-height: 1.7; max-width: 280px;
+    }
+
+    /* Step indicators */
+    .step-track {
+      position: relative; z-index: 1;
+      animation: fadeSlideIn 0.6s 0.6s both;
+    }
+
+    .step-track-label {
+      font-family: var(--font-mono);
+      font-size: 10px; color: var(--text-muted);
+      letter-spacing: 1.5px; text-transform: uppercase;
+      margin-bottom: 14px;
+    }
+
+    .steps {
+      display: flex; flex-direction: column; gap: 10px;
+    }
+
+    .step-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 14px;
+      background: rgba(0,200,255,0.04);
+      border: 1px solid rgba(0,200,255,0.08);
+      border-radius: var(--radius-sm);
+      font-size: 13px; color: var(--text-dim);
+      transition: var(--transition);
+    }
+    .step-item.active {
+      background: rgba(0,200,255,0.1);
+      border-color: rgba(0,200,255,0.25);
+      color: var(--text);
+    }
+    .step-item.done {
+      background: rgba(0,229,160,0.06);
+      border-color: rgba(0,229,160,0.15);
+      color: var(--success);
+    }
+
+    .step-num {
+      width: 24px; height: 24px; border-radius: 50%;
+      background: rgba(0,200,255,0.1);
+      border: 1px solid rgba(0,200,255,0.2);
+      display: grid; place-items: center;
+      font-family: var(--font-mono);
+      font-size: 11px; font-weight: 700;
+      color: var(--text-dim); flex-shrink: 0;
+      transition: var(--transition);
+    }
+    .step-item.active .step-num {
+      background: var(--cyan);
+      border-color: var(--cyan);
+      color: #040d1a;
+      box-shadow: 0 0 12px rgba(0,200,255,0.4);
+    }
+    .step-item.done .step-num {
+      background: var(--success);
+      border-color: var(--success);
+      color: #040d1a;
+    }
+
+    /* Brand bottom quote */
+    .brand-quote {
+      position: relative; z-index: 1;
+      padding: 14px 16px;
+      border-left: 2px solid rgba(0,200,255,0.3);
+      font-size: 12px; color: var(--text-muted);
+      font-style: italic; line-height: 1.6;
+      animation: fadeSlideIn 0.6s 0.75s both;
+    }
+
+    /* ── Form Panel ── */
+    .form-panel {
+      display: flex; flex-direction: column;
+      background: rgba(4,14,32,0.6);
+      /* Desktop: panel kanan scroll internal */
+      overflow: hidden;
+      height: 100%;
+    }
+
+    .form-scroll-area {
+      flex: 1;
+      overflow-y: auto;     /* scroll di dalam panel kanan */
+      padding: 48px 48px 40px;
+      height: 100%;
+    }
+
+    /* ── Form Header ── */
+    .form-header {
+      margin-bottom: 30px;
+      animation: fadeSlideIn 0.6s 0.3s both;
+    }
+
+    .welcome-tag {
+      font-family: var(--font-mono);
+      font-size: 11px; color: var(--cyan);
+      letter-spacing: 2px; text-transform: uppercase;
+      margin-bottom: 10px;
+      display: flex; align-items: center; gap: 6px;
+    }
+
+    .status-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 8px var(--success);
+      animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%,100% { opacity:1; transform:scale(1); }
+      50%     { opacity:.6; transform:scale(.8); }
+    }
+
+    .form-header h1 {
+      font-size: clamp(22px, 3vw, 30px);
+      font-weight: 700; color: var(--text);
+      margin-bottom: 6px; line-height: 1.2;
+    }
+    .form-header p { font-size: 13.5px; color: var(--text-dim); }
+
+    /* ── Field Group ── */
+    .field-group {
+      margin-bottom: 18px;
+      animation: fadeSlideIn 0.5s both;
+    }
+    .field-group:nth-child(1) { animation-delay: 0.38s; }
+    .field-group:nth-child(2) { animation-delay: 0.46s; }
+    .field-group:nth-child(3) { animation-delay: 0.54s; }
+    .field-group:nth-child(4) { animation-delay: 0.62s; }
+    .field-group:nth-child(5) { animation-delay: 0.70s; }
+
+    .field-label {
+      display: flex; align-items: center; justify-content: space-between;
+      font-family: var(--font-mono);
+      font-size: 11.5px; font-weight: 500;
+      color: var(--text-dim);
+      letter-spacing: 0.08em; text-transform: uppercase;
+      margin-bottom: 8px;
+      transition: color var(--transition);
+    }
+
+    .field-hint {
+      font-size: 10.5px; color: var(--text-muted);
+      text-transform: none; letter-spacing: 0;
+      font-family: var(--font-display);
+    }
+
+    .field-group:focus-within .field-label { color: var(--cyan); }
+
+    .input-wrap { position: relative; }
+
+    .input-icon {
+      position: absolute; left: 16px; top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted); font-size: 16px;
+      pointer-events: none; transition: color var(--transition); z-index: 2;
+    }
+    .field-group:focus-within .input-icon { color: var(--cyan); }
+
+    .form-input {
+      width: 100%; height: 52px;
+      padding: 0 48px 0 46px;
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-family: var(--font-display); font-size: 14px;
+      outline: none; transition: var(--transition);
+      -webkit-appearance: none;
+    }
+    .form-input::placeholder { color: var(--text-muted); }
+    .form-input:focus {
+      border-color: var(--cyan);
+      background: rgba(0,40,80,0.7);
+      box-shadow: 0 0 0 3px rgba(0,200,255,0.1),
+                  inset 0 1px 0 rgba(0,200,255,0.08);
+    }
+    .form-input.is-valid {
+      border-color: rgba(0,229,160,0.5);
+      background: rgba(0,30,60,0.7);
+    }
+    .form-input.is-invalid {
+      border-color: rgba(255,77,109,0.5);
+      background: rgba(40,8,16,0.5);
+    }
+
+    .input-line {
+      position: absolute; bottom: 0; left: 50%;
+      transform: translateX(-50%) scaleX(0);
+      width: calc(100% - 2px); height: 2px;
+      background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+      border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+      transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
+      pointer-events: none;
+    }
+    .form-input:focus ~ .input-line { transform: translateX(-50%) scaleX(1); }
+
+    /* validation line color overrides */
+    .form-input.is-valid  ~ .input-line { background: linear-gradient(90deg, transparent, var(--success), transparent); }
+    .form-input.is-invalid ~ .input-line { background: linear-gradient(90deg, transparent, var(--error), transparent); }
+    .form-input.is-valid  ~ .input-line,
+    .form-input.is-invalid ~ .input-line { transform: translateX(-50%) scaleX(1); }
+
+    /* status icon on right */
+    .input-status {
+      position: absolute; right: 14px; top: 50%;
+      transform: translateY(-50%);
+      font-size: 16px; pointer-events: none;
+      opacity: 0; transition: opacity 0.25s;
+      z-index: 2;
+    }
+    .form-input.is-valid  ~ .input-status { opacity: 1; color: var(--success); }
+    .form-input.is-invalid ~ .input-status { opacity: 1; color: var(--error); }
+
+    /* eye toggle */
+    .input-icon-right {
+      position: absolute; right: 14px; top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted); font-size: 17px;
+      cursor: pointer; z-index: 3; padding: 4px;
+      border-radius: 4px; background: none; border: none;
+      display: flex; align-items: center;
+      transition: color var(--transition);
+    }
+    .input-icon-right:hover { color: var(--cyan); }
+
+    /* field message */
+    .field-msg {
+      min-height: 18px;
+      font-size: 11.5px;
+      margin-top: 5px;
+      padding-left: 2px;
+      display: flex; align-items: center; gap: 5px;
+      transition: all 0.25s;
+      overflow: hidden;
+    }
+    .field-msg.error { color: #ff8fa3; }
+    .field-msg.success { color: var(--success); }
+    .field-msg.info { color: var(--text-muted); }
+    .field-msg i { font-size: 12px; flex-shrink: 0; }
+
+    /* ── Password Strength Bar ── */
+    .strength-wrap {
+      margin-top: 8px;
+      animation: fadeSlideIn 0.3s both;
+    }
+
+    .strength-bar {
+      height: 3px;
+      background: rgba(255,255,255,0.06);
+      border-radius: 8px;
+      overflow: hidden;
+      margin-bottom: 5px;
+    }
+
+    .strength-fill {
+      height: 100%; width: 0;
+      border-radius: 8px;
+      transition: width 0.5s cubic-bezier(0.4,0,0.2,1), background 0.4s;
+    }
+
+    .strength-label {
+      font-family: var(--font-mono);
+      font-size: 10.5px; letter-spacing: 0.05em;
+      color: var(--text-muted);
+      display: flex; justify-content: space-between;
+    }
+
+    .strength-checks {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px 12px;
+      margin-top: 8px;
+    }
+
+    .strength-check {
+      font-size: 11px; color: var(--text-muted);
+      display: flex; align-items: center; gap: 5px;
+      transition: color 0.25s;
+    }
+    .strength-check i { font-size: 11px; }
+    .strength-check.pass { color: var(--success); }
+
+    /* ── Username availability ── */
+    .username-status {
+      position: absolute; right: 14px; top: 50%;
+      transform: translateY(-50%);
+      font-size: 13px; z-index: 3;
+      display: flex; align-items: center; gap: 4px;
+      pointer-events: none;
+    }
+
+    .checking-spin {
+      width: 14px; height: 14px;
+      border: 2px solid rgba(0,200,255,0.2);
+      border-top-color: var(--cyan);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      display: none;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Terms checkbox ── */
+    .terms-group {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 14px 16px;
+      background: rgba(0,200,255,0.03);
+      border: 1px solid rgba(0,200,255,0.08);
+      border-radius: var(--radius-sm);
+      animation: fadeSlideIn 0.5s 0.76s both;
+      transition: var(--transition);
+    }
+    .terms-group:hover {
+      background: rgba(0,200,255,0.06);
+      border-color: rgba(0,200,255,0.15);
+    }
+
+    .custom-check {
+      width: 18px; height: 18px; flex-shrink: 0;
+      margin-top: 1px;
+      border: 1.5px solid var(--input-border);
+      border-radius: 4px;
+      background: var(--input-bg);
+      cursor: pointer;
+      appearance: none; -webkit-appearance: none;
+      position: relative; transition: var(--transition);
+    }
+    .custom-check:checked {
+      background: var(--cyan);
+      border-color: var(--cyan);
+      box-shadow: 0 0 10px rgba(0,200,255,0.3);
+    }
+    .custom-check:checked::after {
+      content: '';
+      position: absolute;
+      top: 2px; left: 5px;
+      width: 6px; height: 10px;
+      border: 2px solid #040d1a;
+      border-top: none; border-left: none;
+      transform: rotate(45deg);
+    }
+
+    .terms-text {
+      font-size: 13px; color: var(--text-dim);
+      line-height: 1.55; cursor: pointer;
+      user-select: none;
+    }
+    .terms-text a {
+      color: var(--cyan); text-decoration: none;
+      font-weight: 500; transition: var(--transition);
+    }
+    .terms-text a:hover { color: #fff; }
+
+    /* ── Submit Button ── */
+    .btn-register {
+      width: 100%; height: 52px;
+      background: linear-gradient(135deg, var(--blue) 0%, var(--cyan) 100%);
+      border: none; border-radius: var(--radius-sm);
+      color: #fff; font-family: var(--font-display);
+      font-size: 15px; font-weight: 600;
+      letter-spacing: 0.04em;
+      cursor: pointer; position: relative; overflow: hidden;
+      transition: var(--transition);
+      box-shadow: 0 4px 24px rgba(0,114,198,0.35);
+      animation: fadeSlideIn 0.5s 0.82s both;
+      margin-top: 18px;
+    }
+    .btn-register::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(135deg, var(--cyan) 0%, var(--blue) 100%);
+      opacity: 0; transition: opacity var(--transition);
+    }
+    .btn-register:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 36px rgba(0,200,255,0.35);
+    }
+    .btn-register:hover::before { opacity: 1; }
+    .btn-register:active { transform: translateY(0); }
+    .btn-register:disabled {
+      opacity: 0.45; cursor: not-allowed;
+      transform: none !important;
+      box-shadow: none !important;
+    }
+
+    .btn-register span {
+      position: relative; z-index: 1;
+      display: flex; align-items: center;
+      justify-content: center; gap: 8px;
+    }
+
+    .btn-register::after {
+      content: '';
+      position: absolute; top: 0; left: -100%;
+      width: 60%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent);
+      transform: skewX(-20deg);
+      animation: shimmer 4s 2s ease-in-out infinite;
+    }
+    @keyframes shimmer {
+      0%       { left: -100%; }
+      40%,100% { left: 160%; }
+    }
+
+    .spinner-ring {
+      display: none;
+      position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%,-50%);
+      width: 22px; height: 22px;
+    }
+    .btn-register.loading .spinner-ring { display: block; }
+    .btn-register.loading span { opacity: 0; }
+    .spinner-ring svg { animation: spin 0.9s linear infinite; }
+
+    /* ── Login Link ── */
+    .login-row-link {
+      text-align: center; margin-top: 22px;
+      font-size: 13px; color: var(--text-muted);
+      animation: fadeSlideIn 0.5s 0.9s both;
+    }
+    .login-row-link a {
+      color: var(--cyan); text-decoration: none;
+      font-weight: 600; transition: var(--transition);
+    }
+    .login-row-link a:hover { color: #fff; }
+
+    .sys-info {
+      font-family: var(--font-mono);
+      font-size: 10px; color: var(--text-muted);
+      text-align: center; margin-top: 10px;
+      letter-spacing: 0.06em;
+      animation: fadeSlideIn 0.5s 0.94s both;
+    }
+    .sys-info span { color: var(--cyan); opacity: 0.7; }
+
+    /* ── Alert ── */
+    .alert-error {
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px 16px;
+      background: rgba(255,77,109,0.1);
+      border: 1px solid rgba(255,77,109,0.3);
+      border-radius: var(--radius-sm);
+      color: #ff8fa3; font-size: 13.5px;
+      margin-bottom: 18px;
+      animation: shakeIn 0.4s cubic-bezier(0.36,0.07,0.19,0.97);
+    }
+    @keyframes shakeIn {
+      0%,100% { transform: translateX(0); }
+      10%,50%,90% { transform: translateX(-6px); }
+      30%,70% { transform: translateX(6px); }
+    }
+
+    /* ── Entrance ── */
+    @keyframes fadeSlideIn {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 991.98px) {
+      /* Mobile/tablet: card auto height, page-wrapper scrolls */
+      .register-row {
+        height: auto;
+        align-self: auto;
+      }
+      .register-row > .col-lg-5,
+      .register-row > .col-lg-7 {
+        height: auto;
+      }
+      .form-panel { overflow: visible; height: auto; }
+      .form-scroll-area {
+        overflow-y: visible;
+        height: auto;
+        padding: 36px 32px 40px;
+      }
+      .brand-panel {
+        overflow: hidden; /* kembali ke hidden untuk mobile */
+        overflow-y: visible;
+        padding: 28px 28px 24px;
+        border-right: none;
+        border-bottom: 1px solid var(--border-card);
+      }
+      .steps { flex-direction: row; flex-wrap: wrap; gap: 8px; }
+      .step-item { flex: 1 1 calc(50% - 4px); }
+      .brand-quote { display: none; }
+    }
+
+    @media (max-width: 575.98px) {
+      .page-wrapper { padding: 12px 10px 32px; }
+      .brand-panel { padding: 22px 18px 20px; }
+      .brand-headline h2 { font-size: 21px; }
+      .form-scroll-area { padding: 26px 20px 32px; }
+      .step-item { flex: 1 1 100%; }
+      .strength-checks { grid-template-columns: 1fr; }
+      .register-row { border-radius: 16px; }
+    }
+
+    @media (min-width: 992px) {
+      /* Desktop: center card vertikally jika viewport cukup tinggi */
+      .page-wrapper {
+        align-items: center;
+      }
+    }
+
+    @media (min-width: 1400px) {
+      .register-row { max-width: 1120px; }
+    }
+
+    /* Autofill fix */
+    input:-webkit-autofill,
+    input:-webkit-autofill:focus {
+      -webkit-box-shadow: 0 0 0 1000px rgba(0,30,60,0.9) inset;
+      -webkit-text-fill-color: var(--text);
+      transition: background-color 9999s ease;
+    }
+
+    /* Particle */
+    .particle {
+      position: fixed; border-radius: 50%;
+      pointer-events: none; z-index: 0;
+      animation: floatUp linear infinite; opacity: 0;
+    }
+    @keyframes floatUp {
+      0%   { transform: translateY(0) translateX(0); opacity: 0; }
+      10%  { opacity: 1; }
+      90%  { opacity: 0.4; }
+      100% { transform: translateY(-100vh) translateX(var(--drift)); opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="blob blob-1"></div>
+<div class="blob blob-2"></div>
+<div class="blob blob-3"></div>
+<canvas id="bg-canvas"></canvas>
+
+<div class="page-wrapper">
+  <div class="container-fluid px-0" style="max-width:1080px; width:100%">
+    <div class="register-row row g-0 mx-auto">
+
+      <!-- ── LEFT: Brand Panel ── -->
+      <div class="col-12 col-lg-5 brand-panel">
+
+        <div class="brand-logo">
+          <div class="logo-icon">
+            <i class="bi bi-diagram-3-fill"></i>
+          </div>
+          <div class="logo-text">
+            <strong>PMS</strong>
+            Project Management System
+          </div>
+        </div>
+
+        <div class="brand-headline">
+          <div class="brand-tag">Bergabung Sekarang</div>
+          <h2>Buat Akun<br><span>Baru Anda</span></h2>
+          <p>Daftarkan diri dan mulai kelola proyek-proyek Anda secara lebih terstruktur dan efisien.</p>
+        </div>
+
+        <div class="step-track">
+          <div class="step-track-label">Langkah Pendaftaran</div>
+          <div class="steps">
+            <div class="step-item active" id="step1">
+              <div class="step-num" id="stepNum1">1</div>
+              <span>Isi informasi akun</span>
+            </div>
+            <div class="step-item" id="step2">
+              <div class="step-num" id="stepNum2">2</div>
+              <span>Buat password aman</span>
+            </div>
+            <div class="step-item" id="step3">
+              <div class="step-num" id="stepNum3">3</div>
+              <span>Konfirmasi & selesai</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="brand-quote">
+          "Setiap proyek besar dimulai dari langkah kecil — dan langkah Anda dimulai dari sini."
+        </div>
+
+      </div>
+
+      <!-- ── RIGHT: Form Panel ── -->
+      <div class="col-12 col-lg-7 form-panel">
+        <div class="form-scroll-area">
+
+          <div class="form-header">
+            <div class="welcome-tag">
+              <span class="status-dot"></span>
+              Pendaftaran Akun Baru
+            </div>
+            <h1>Daftar Akun</h1>
+            <p>Lengkapi formulir di bawah untuk membuat akun Anda</p>
+          </div>
+
+          <div class="alert-error" id="alertError" style="display:none">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            <span id="alertMsg">Terjadi kesalahan. Silakan periksa kembali formulir.</span>
+          </div>
+
+          <form id="registerForm" novalidate autocomplete="off">
+
+            <!-- Nama Lengkap -->
+            <div class="field-group">
+              <label class="field-label" for="nama">
+                Nama Lengkap
+                <span class="field-hint">Sesuai identitas resmi</span>
+              </label>
+              <div class="input-wrap">
+                <i class="bi bi-person input-icon"></i>
+                <input
+                  type="text" id="nama" class="form-input"
+                  placeholder="Contoh: Budi Santoso"
+                  autocomplete="name"
+                  required
+                />
+                <span class="input-line"></span>
+                <span class="input-status" id="namaStatus"></span>
+              </div>
+              <div class="field-msg info" id="namaMsg"></div>
+            </div>
+
+            <!-- Username -->
+            <div class="field-group">
+              <label class="field-label" for="username">
+                Username
+                <span class="field-hint">Hanya huruf, angka, dan _</span>
+              </label>
+              <div class="input-wrap">
+                <i class="bi bi-at input-icon"></i>
+                <input
+                  type="text" id="username" class="form-input"
+                  placeholder="mis: budi_santoso"
+                  autocomplete="off" spellcheck="false"
+                  required
+                />
+                <div class="username-status" id="usernameStatusWrap">
+                  <div class="checking-spin" id="checkingSpin"></div>
+                </div>
+                <span class="input-line"></span>
+              </div>
+              <div class="field-msg info" id="usernameMsg"></div>
+            </div>
+
+            <!-- Password -->
+            <div class="field-group">
+              <label class="field-label" for="password">
+                Password
+              </label>
+              <div class="input-wrap">
+                <i class="bi bi-lock input-icon"></i>
+                <input
+                  type="password" id="password" class="form-input"
+                  placeholder="Minimal 8 karakter"
+                  autocomplete="new-password"
+                  required
+                />
+                <button type="button" class="input-icon-right" id="togglePass" aria-label="Toggle password">
+                  <i class="bi bi-eye" id="eyeIcon"></i>
+                </button>
+                <span class="input-line"></span>
+              </div>
+
+              <!-- Strength meter -->
+              <div class="strength-wrap" id="strengthWrap" style="display:none">
+                <div class="strength-bar">
+                  <div class="strength-fill" id="strengthFill"></div>
+                </div>
+                <div class="strength-label">
+                  <span id="strengthText">Kekuatan password</span>
+                  <span id="strengthPct"></span>
+                </div>
+                <div class="strength-checks" id="strengthChecks">
+                  <div class="strength-check" id="chkLen">
+                    <i class="bi bi-x-circle"></i> Min. 8 karakter
+                  </div>
+                  <div class="strength-check" id="chkUpper">
+                    <i class="bi bi-x-circle"></i> Huruf besar
+                  </div>
+                  <div class="strength-check" id="chkNum">
+                    <i class="bi bi-x-circle"></i> Angka
+                  </div>
+                  <div class="strength-check" id="chkSym">
+                    <i class="bi bi-x-circle"></i> Simbol (!@#$)
+                  </div>
+                </div>
+              </div>
+              <div class="field-msg" id="passMsg"></div>
+            </div>
+
+            <!-- Konfirmasi Password -->
+            <div class="field-group">
+              <label class="field-label" for="confirmPass">
+                Konfirmasi Password
+              </label>
+              <div class="input-wrap">
+                <i class="bi bi-lock-fill input-icon"></i>
+                <input
+                  type="password" id="confirmPass" class="form-input"
+                  placeholder="Ulangi password Anda"
+                  autocomplete="new-password"
+                  required
+                />
+                <button type="button" class="input-icon-right" id="toggleConfirm" aria-label="Toggle confirm password">
+                  <i class="bi bi-eye" id="eyeIconConfirm"></i>
+                </button>
+                <span class="input-line"></span>
+                <span class="input-status" id="confirmStatus"></span>
+              </div>
+              <div class="field-msg" id="confirmMsg"></div>
+            </div>
+
+            <!-- Terms -->
+            <div class="terms-group">
+              <input type="checkbox" class="custom-check" id="terms" required />
+              <label class="terms-text" for="terms">
+                Saya telah membaca dan menyetujui
+                <a href="#">Syarat & Ketentuan</a> serta
+                <a href="#">Kebijakan Privasi</a> yang berlaku.
+              </label>
+            </div>
+
+            <!-- Submit -->
+            <button type="submit" class="btn-register" id="btnRegister">
+              <span>
+                <i class="bi bi-person-plus-fill"></i>
+                Buat Akun Sekarang
+              </span>
+              <div class="spinner-ring">
+                <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+                  <circle cx="11" cy="11" r="9" stroke="rgba(255,255,255,0.3)" stroke-width="2.5"/>
+                  <path d="M11 2a9 9 0 0 1 9 9" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+                </svg>
+              </div>
+            </button>
+
+          </form>
+
+          <div class="login-row-link">
+            Sudah punya akun? <a href="login.html">Masuk di sini</a>
+          </div>
+
+          <div class="sys-info">
+            PMS v2.0 &mdash; <span>secure connection</span> &mdash; &copy; 2025
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+/* ── Network Canvas (same as login) ─────────────────────── */
+(function () {
+  const canvas = document.getElementById('bg-canvas');
+  const ctx = canvas.getContext('2d');
+  let W, H, nodes = [];
+  const COLORS = ['rgba(0,200,255,', 'rgba(0,114,198,', 'rgba(0,229,160,'];
+
+  function resize() {
+    W = canvas.width  = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+    initNodes();
+  }
+
+  function initNodes() {
+    nodes = [];
+    const n = Math.max(28, Math.floor((W * H) / 22000));
+    for (let i = 0; i < n; i++) {
+      nodes.push({
+        x: Math.random() * W, y: Math.random() * H,
+        vx: (Math.random() - 0.5) * 0.45,
+        vy: (Math.random() - 0.5) * 0.45,
+        r: Math.random() * 2 + 1,
+        c: COLORS[Math.floor(Math.random() * COLORS.length)],
+        pulse: Math.random() * Math.PI * 2,
+      });
+    }
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    nodes.forEach(n => {
+      n.x += n.vx; n.y += n.vy; n.pulse += 0.018;
+      if (n.x < -20) n.x = W + 20; if (n.x > W + 20) n.x = -20;
+      if (n.y < -20) n.y = H + 20; if (n.y > H + 20) n.y = -20;
+    });
+    for (let i = 0; i < nodes.length; i++) {
+      for (let j = i + 1; j < nodes.length; j++) {
+        const a = nodes[i], b = nodes[j];
+        const dx = a.x - b.x, dy = a.y - b.y;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        if (dist < 160) {
+          ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y);
+          ctx.strokeStyle = `rgba(0,160,220,${(1 - dist/160)*0.28})`;
+          ctx.lineWidth = 0.8; ctx.stroke();
+        }
+      }
+    }
+    nodes.forEach(n => {
+      const g = 0.5 + Math.sin(n.pulse) * 0.35;
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, n.r * (0.9 + Math.sin(n.pulse)*0.15), 0, Math.PI*2);
+      ctx.fillStyle = n.c + g + ')'; ctx.fill();
+      if (n.r > 2) {
+        ctx.beginPath(); ctx.arc(n.x, n.y, n.r*3.5, 0, Math.PI*2);
+        ctx.fillStyle = n.c + (g*0.08) + ')'; ctx.fill();
+      }
+    });
+    requestAnimationFrame(draw);
+  }
+
+  window.addEventListener('resize', resize, { passive: true });
+  resize(); draw();
+})();
+
+/* ── Floating Particles ─────────────────────────────────── */
+(function () {
+  const hues = ['rgba(0,200,255,', 'rgba(0,114,198,', 'rgba(0,229,160,'];
+  for (let i = 0; i < 18; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    const size = Math.random() * 4 + 2;
+    const clr  = hues[Math.floor(Math.random() * hues.length)];
+    const dur  = 12 + Math.random() * 20;
+    p.style.cssText = `width:${size}px;height:${size}px;left:${Math.random()*100}vw;bottom:-10px;background:${clr}${0.4+Math.random()*0.3}));animation-duration:${dur}s;animation-delay:${Math.random()*-20}s;--drift:${(Math.random()-0.5)*120}px;box-shadow:0 0 ${size*3}px ${clr}0.6));`;
+    document.body.appendChild(p);
+  }
+})();
+
+/* ── Password Toggle ─────────────────────────────────────── */
+document.getElementById('togglePass').addEventListener('click', () => {
+  const inp = document.getElementById('password');
+  const ico = document.getElementById('eyeIcon');
+  const show = inp.type === 'password';
+  inp.type = show ? 'text' : 'password';
+  ico.className = show ? 'bi bi-eye-slash' : 'bi bi-eye';
+});
+
+document.getElementById('toggleConfirm').addEventListener('click', () => {
+  const inp = document.getElementById('confirmPass');
+  const ico = document.getElementById('eyeIconConfirm');
+  const show = inp.type === 'password';
+  inp.type = show ? 'text' : 'password';
+  ico.className = show ? 'bi bi-eye-slash' : 'bi bi-eye';
+});
+
+/* ── Nama Validation ─────────────────────────────────────── */
+const namaInput  = document.getElementById('nama');
+const namaStatus = document.getElementById('namaStatus');
+const namaMsg    = document.getElementById('namaMsg');
+
+namaInput.addEventListener('input', () => {
+  const v = namaInput.value.trim();
+  if (!v) {
+    resetField(namaInput, namaStatus, namaMsg);
+    return;
+  }
+  if (v.length < 3) {
+    setInvalid(namaInput, namaStatus, namaMsg, 'Nama minimal 3 karakter');
+  } else if (!/^[a-zA-Z\s.']+$/.test(v)) {
+    setInvalid(namaInput, namaStatus, namaMsg, 'Nama hanya boleh huruf dan spasi');
+  } else {
+    setValid(namaInput, namaStatus, namaMsg, 'Nama valid');
+  }
+  updateSteps();
+});
+
+/* ── Username Validation ─────────────────────────────────── */
+const usernameInput   = document.getElementById('username');
+const usernameMsg     = document.getElementById('usernameMsg');
+const checkingSpin    = document.getElementById('checkingSpin');
+let usernameTimer;
+
+// Fake unavailable usernames for demo
+const takenNames = ['admin', 'manager', 'user', 'test', 'root', 'superadmin'];
+
+usernameInput.addEventListener('input', () => {
+  const v = usernameInput.value.trim();
+  clearTimeout(usernameTimer);
+  checkingSpin.style.display = 'none';
+  resetField(usernameInput, null, usernameMsg);
+
+  if (!v) return;
+
+  if (v.length < 3) {
+    setFieldMsg(usernameMsg, 'Minimal 3 karakter', 'error');
+    usernameInput.classList.add('is-invalid');
+    return;
+  }
+  if (!/^[a-zA-Z0-9_]+$/.test(v)) {
+    setFieldMsg(usernameMsg, 'Hanya huruf, angka, dan underscore (_)', 'error');
+    usernameInput.classList.add('is-invalid');
+    return;
+  }
+  if (v.length > 20) {
+    setFieldMsg(usernameMsg, 'Maksimal 20 karakter', 'error');
+    usernameInput.classList.add('is-invalid');
+    return;
+  }
+
+  // Simulate availability check
+  checkingSpin.style.display = 'block';
+  setFieldMsg(usernameMsg, 'Mengecek ketersediaan...', 'info');
+
+  usernameTimer = setTimeout(() => {
+    checkingSpin.style.display = 'none';
+    if (takenNames.includes(v.toLowerCase())) {
+      usernameInput.classList.add('is-invalid');
+      setFieldMsg(usernameMsg, `Username "${v}" sudah digunakan`, 'error');
+    } else {
+      usernameInput.classList.add('is-valid');
+      setFieldMsg(usernameMsg, `@${v} tersedia`, 'success');
+    }
+    updateSteps();
+  }, 900);
+});
+
+/* ── Password Strength ───────────────────────────────────── */
+const passInput    = document.getElementById('password');
+const strengthWrap = document.getElementById('strengthWrap');
+const strengthFill = document.getElementById('strengthFill');
+const strengthText = document.getElementById('strengthText');
+const strengthPct  = document.getElementById('strengthPct');
+const passMsg      = document.getElementById('passMsg');
+
+const checks = {
+  len:   { el: document.getElementById('chkLen'),   test: v => v.length >= 8 },
+  upper: { el: document.getElementById('chkUpper'), test: v => /[A-Z]/.test(v) },
+  num:   { el: document.getElementById('chkNum'),   test: v => /[0-9]/.test(v) },
+  sym:   { el: document.getElementById('chkSym'),   test: v => /[!@#$%^&*()_+\-=\[\]{}|;':",./<>?]/.test(v) },
+};
+
+const levels = [
+  { min: 0,   label: 'Sangat Lemah', color: '#ff4d6d', pct: 15  },
+  { min: 1,   label: 'Lemah',        color: '#ff7849', pct: 32  },
+  { min: 2,   label: 'Cukup',        color: '#f59e0b', pct: 55  },
+  { min: 3,   label: 'Kuat',         color: '#22d3ee', pct: 78  },
+  { min: 4,   label: 'Sangat Kuat',  color: '#00e5a0', pct: 100 },
+];
+
+passInput.addEventListener('input', () => {
+  const v = passInput.value;
+  if (!v) {
+    strengthWrap.style.display = 'none';
+    resetField(passInput, null, passMsg);
+    updateSteps();
+    return;
+  }
+
+  strengthWrap.style.display = 'block';
+
+  let score = 0;
+  Object.values(checks).forEach(c => {
+    const pass = c.test(v);
+    c.el.classList.toggle('pass', pass);
+    c.el.querySelector('i').className = pass ? 'bi bi-check-circle-fill' : 'bi bi-x-circle';
+    if (pass) score++;
+  });
+
+  const lvl = levels[score];
+  strengthFill.style.width   = lvl.pct + '%';
+  strengthFill.style.background = `linear-gradient(90deg, ${lvl.color}aa, ${lvl.color})`;
+  strengthText.textContent   = lvl.label;
+  strengthText.style.color   = lvl.color;
+  strengthPct.textContent    = lvl.pct + '%';
+
+  passInput.classList.remove('is-valid', 'is-invalid');
+  if (score < 2) {
+    passInput.classList.add('is-invalid');
+  } else if (score >= 3) {
+    passInput.classList.add('is-valid');
+  }
+
+  // re-check confirm
+  checkConfirm();
+  updateSteps();
+});
+
+/* ── Confirm Password ────────────────────────────────────── */
+const confirmInput  = document.getElementById('confirmPass');
+const confirmStatus = document.getElementById('confirmStatus');
+const confirmMsg    = document.getElementById('confirmMsg');
+
+function checkConfirm() {
+  const pass = passInput.value;
+  const conf = confirmInput.value;
+  if (!conf) {
+    resetField(confirmInput, confirmStatus, confirmMsg);
+    return;
+  }
+  if (conf === pass) {
+    setValid(confirmInput, confirmStatus, confirmMsg, 'Password cocok');
+    confirmStatus.innerHTML = '<i class="bi bi-check-circle-fill"></i>';
+  } else {
+    setInvalid(confirmInput, confirmStatus, confirmMsg, 'Password tidak cocok');
+    confirmStatus.innerHTML = '<i class="bi bi-x-circle-fill"></i>';
+  }
+  updateSteps();
+}
+
+confirmInput.addEventListener('input', checkConfirm);
+
+/* ── Step Indicator Update ───────────────────────────────── */
+function updateSteps() {
+  const namaOk    = namaInput.classList.contains('is-valid');
+  const userOk    = usernameInput.classList.contains('is-valid');
+  const passOk    = passInput.classList.contains('is-valid');
+  const confirmOk = confirmInput.classList.contains('is-valid');
+
+  // Step 1: nama + username
+  const s1 = document.getElementById('step1');
+  const n1 = document.getElementById('stepNum1');
+  if (namaOk && userOk) {
+    s1.classList.remove('active'); s1.classList.add('done');
+    n1.innerHTML = '<i class="bi bi-check-lg" style="font-size:12px"></i>';
+  } else {
+    s1.classList.add('active'); s1.classList.remove('done');
+    n1.textContent = '1';
+  }
+
+  // Step 2: password
+  const s2 = document.getElementById('step2');
+  const n2 = document.getElementById('stepNum2');
+  if (passOk) {
+    s2.classList.remove('active'); s2.classList.add('done');
+    n2.innerHTML = '<i class="bi bi-check-lg" style="font-size:12px"></i>';
+  } else if (namaOk && userOk) {
+    s2.classList.add('active'); s2.classList.remove('done');
+    n2.textContent = '2';
+  } else {
+    s2.classList.remove('active', 'done');
+    n2.textContent = '2';
+  }
+
+  // Step 3: confirm
+  const s3 = document.getElementById('step3');
+  const n3 = document.getElementById('stepNum3');
+  if (confirmOk) {
+    s3.classList.remove('active'); s3.classList.add('done');
+    n3.innerHTML = '<i class="bi bi-check-lg" style="font-size:12px"></i>';
+  } else if (passOk) {
+    s3.classList.add('active'); s3.classList.remove('done');
+    n3.textContent = '3';
+  } else {
+    s3.classList.remove('active', 'done');
+    n3.textContent = '3';
+  }
+}
+
+/* ── Helpers ─────────────────────────────────────────────── */
+function setValid(input, statusEl, msgEl, msg) {
+  input.classList.remove('is-invalid'); input.classList.add('is-valid');
+  if (statusEl) { statusEl.innerHTML = '<i class="bi bi-check-circle-fill"></i>'; statusEl.style.color = 'var(--success)'; }
+  if (msgEl)    setFieldMsg(msgEl, msg, 'success');
+}
+
+function setInvalid(input, statusEl, msgEl, msg) {
+  input.classList.remove('is-valid'); input.classList.add('is-invalid');
+  if (statusEl) { statusEl.innerHTML = '<i class="bi bi-x-circle-fill"></i>'; statusEl.style.color = 'var(--error)'; }
+  if (msgEl)    setFieldMsg(msgEl, msg, 'error');
+}
+
+function resetField(input, statusEl, msgEl) {
+  input.classList.remove('is-valid', 'is-invalid');
+  if (statusEl) statusEl.innerHTML = '';
+  if (msgEl)    msgEl.innerHTML = '';
+}
+
+function setFieldMsg(el, text, type) {
+  const icons = { success: 'bi-check-circle', error: 'bi-exclamation-circle', info: 'bi-info-circle' };
+  el.className = `field-msg ${type}`;
+  el.innerHTML = text ? `<i class="bi ${icons[type] || ''}"></i>${text}` : '';
+}
+
+/* ── Form Submit ─────────────────────────────────────────── */
+document.getElementById('registerForm').addEventListener('submit', function (e) {
+  e.preventDefault();
+
+  const alert = document.getElementById('alertError');
+  alert.style.display = 'none';
+
+  const nama    = namaInput.value.trim();
+  const user    = usernameInput.value.trim();
+  const pass    = passInput.value;
+  const conf    = confirmInput.value;
+  const terms   = document.getElementById('terms').checked;
+
+  // Validasi final
+  if (!nama || !namaInput.classList.contains('is-valid')) {
+    showAlert('Harap isi nama lengkap yang valid.');
+    namaInput.focus(); return;
+  }
+  if (!user || !usernameInput.classList.contains('is-valid')) {
+    showAlert('Harap pilih username yang tersedia dan valid.');
+    usernameInput.focus(); return;
+  }
+  if (!pass || !passInput.classList.contains('is-valid')) {
+    showAlert('Password belum memenuhi kriteria keamanan.');
+    passInput.focus(); return;
+  }
+  if (pass !== conf) {
+    showAlert('Konfirmasi password tidak cocok.');
+    confirmInput.focus(); return;
+  }
+  if (!terms) {
+    showAlert('Anda harus menyetujui syarat & ketentuan terlebih dahulu.');
+    return;
+  }
+
+  const btn = document.getElementById('btnRegister');
+  btn.classList.add('loading');
+  btn.disabled = true;
+
+  setTimeout(() => {
+    btn.classList.remove('loading');
+    btn.disabled = false;
+    // Success state
+    btn.style.background = 'linear-gradient(135deg, #00e5a0, #0072c6)';
+    btn.querySelector('span').innerHTML = '<i class="bi bi-check-lg"></i> Akun Berhasil Dibuat!';
+    // Redirect: window.location.href = '/login';
+    setTimeout(() => {
+      btn.style.background = '';
+      btn.querySelector('span').innerHTML = '<i class="bi bi-person-plus-fill"></i> Buat Akun Sekarang';
+    }, 2800);
+  }, 2000);
+});
+
+function showAlert(msg) {
+  const el = document.getElementById('alertError');
+  document.getElementById('alertMsg').textContent = msg;
+  el.style.display = 'flex';
+  el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+</script>
+</body>
+</html>

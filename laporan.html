@@ -22,8 +22,8 @@
     --font:'Outfit',sans-serif;--mono:'DM Mono',monospace;
   }
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-  html{scroll-behavior:smooth}
-  body{font-family:var(--font);background:var(--bg);color:var(--txt);min-height:100vh;overflow-x:hidden}
+  html{scroll-behavior:smooth;overflow-x:hidden}
+  body{font-family:var(--font);background:var(--bg);color:var(--txt);min-height:100vh;overflow-x:hidden;max-width:100vw}
   a{text-decoration:none;color:inherit}
   *{scrollbar-width:thin;scrollbar-color:rgba(0,200,255,.15) transparent}
   *::-webkit-scrollbar{width:4px;height:4px}
@@ -33,7 +33,7 @@
   #bgc{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.4}
 
   /* ══ Layout ══ */
-  .layout{display:flex;min-height:100vh;position:relative;z-index:1}
+  .layout{display:flex;min-height:100vh;position:relative;z-index:1;width:100%;overflow-x:hidden}
 
   /* ══ Sidebar ══ */
   .sidebar{position:fixed;top:0;left:0;bottom:0;width:var(--sw);background:#050e1d;border-right:1px solid var(--bd);display:flex;flex-direction:column;z-index:400;transition:transform var(--dur) var(--ease),width var(--dur) var(--ease);overflow:hidden}
@@ -78,7 +78,7 @@
   .sb-overlay{display:none;position:fixed;inset:0;background:rgba(2,8,18,.78);z-index:300;cursor:pointer;backdrop-filter:blur(2px)}
 
   /* ══ Main wrap ══ */
-  .main-wrap{margin-left:var(--sw);flex:1;display:flex;flex-direction:column;min-height:100vh;transition:margin-left var(--dur) var(--ease)}
+  .main-wrap{margin-left:var(--sw);flex:1;display:flex;flex-direction:column;min-height:100vh;transition:margin-left var(--dur) var(--ease);min-width:0;max-width:100%}
   .main-wrap.sb-expanded{margin-left:var(--swc)}
 
   /* ══ Topbar ══ */
@@ -123,7 +123,7 @@
   .dd-sep{height:1px;background:var(--bd);margin:4px 6px}
 
   /* ══ Page body ══ */
-  .page-body{flex:1;padding:22px 24px 0}
+  .page-body{flex:1;padding:22px 24px 0;overflow-x:hidden;max-width:100%;min-width:0}
 
   /* ══ Page Header ══ */
   @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
@@ -158,9 +158,11 @@
 
   /* ══ Table Card ══ */
   .tbl-card{background:var(--card);border:1px solid var(--bd);border-radius:var(--r);overflow:hidden;margin-bottom:24px}
-  /* Desktop & tablet: tidak scroll */
-  .tbl-scroll-mob{overflow:visible}
-  .dtbl{width:100%;border-collapse:collapse;margin:0}
+  /* Table responsive wrapper - always scrollable */
+  .tbl-card .table-responsive{-webkit-overflow-scrolling:touch}
+  .tbl-card .table-responsive::-webkit-scrollbar{height:5px}
+  .tbl-card .table-responsive::-webkit-scrollbar-thumb{background:rgba(255,77,109,.25);border-radius:3px}
+  .dtbl{width:100%;border-collapse:collapse;min-width:780px;margin:0}
   .dtbl thead tr{background:rgba(255,77,109,.04);border-bottom:1px solid rgba(255,77,109,.15)}
   .dtbl th{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:1.2px;color:var(--muted);padding:11px 14px;white-space:nowrap;font-weight:600;border:none}
   .dtbl td{padding:12px 14px;border-bottom:1px solid var(--bd);font-size:13px;vertical-align:middle;border-left:none;border-right:none;border-top:none}
@@ -237,21 +239,21 @@
 
   /* ══ Modals ══ */
   @keyframes mshim{0%{left:-100%}100%{left:160%}}
-  .m-dark .modal-content{background:#050e1d;border-radius:var(--r);color:var(--txt);position:relative;overflow:hidden;box-shadow:0 32px 80px rgba(0,0,0,.7)}
+  .m-dark .modal-content{background:#050e1d;border-radius:var(--r);color:var(--txt);position:relative;overflow:hidden;box-shadow:0 32px 80px rgba(0,0,0,.7);display:flex;flex-direction:column;max-height:calc(100dvh - 60px)}
   .m-dark .modal-content::before{content:'';position:absolute;top:0;left:-100%;width:60%;height:2px;pointer-events:none;z-index:1;animation:mshim 2.2s .2s ease-in-out forwards}
   .m-dark.m-red .modal-content{border:1px solid rgba(255,77,109,.25)}
   .m-dark.m-red .modal-content::before{background:linear-gradient(90deg,transparent,rgba(255,77,109,.55),transparent)}
   .m-dark.m-cyan .modal-content{border:1px solid rgba(0,200,255,.25)}
   .m-dark.m-cyan .modal-content::before{background:linear-gradient(90deg,transparent,rgba(0,200,255,.55),transparent)}
-  .m-hd{display:flex;align-items:center;justify-content:space-between;padding:16px 20px}
+  .m-hd{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;flex-shrink:0}
   .m-dark.m-red .m-hd{border-bottom:1px solid rgba(255,77,109,.12)}
   .m-dark.m-cyan .m-hd{border-bottom:1px solid rgba(0,200,255,.12)}
   .m-hd-title{display:flex;align-items:center;gap:9px;margin:0;font-size:15px;font-weight:700}
   .m-dark.m-red .m-hd-title i{color:var(--err)}.m-dark.m-cyan .m-hd-title i{color:var(--cyan)}
   .m-close{width:28px;height:28px;border-radius:6px;border:none;background:rgba(255,255,255,.05);display:grid;place-items:center;cursor:pointer;color:var(--dim);font-size:15px;transition:background .2s,color .2s;flex-shrink:0}
   .m-close:hover{background:rgba(255,77,109,.12);color:var(--err)}
-  .m-bd{padding:20px}
-  .m-ft{padding:14px 20px;display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap}
+  .m-bd{padding:20px;overflow-y:auto;flex:1 1 auto;min-height:0}
+  .m-ft{padding:14px 20px;display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;flex-shrink:0}
   .m-dark.m-red .m-ft{border-top:1px solid rgba(255,77,109,.1)}
   .m-dark.m-cyan .m-ft{border-top:1px solid rgba(0,200,255,.1)}
   .warn-box{display:flex;gap:12px;padding:13px;background:rgba(255,77,109,.05);border:1px solid rgba(255,77,109,.15);border-left:3px solid var(--err);border-radius:var(--rs);margin-bottom:12px}
@@ -295,28 +297,40 @@
   .pmg-val{font-size:13px;font-weight:600;color:var(--txt)}
   .pmg-val.c{color:var(--cyan)}.pmg-val.g{color:var(--ok)}.pmg-val.w{color:var(--warn)}.pmg-val.r{color:var(--err)}
 
-  /* ════════════════════════════════════════════════════
-     RESPONSIVE — 3 breakpoint bersih, tanpa duplikat
-  ════════════════════════════════════════════════════ */
+  /* ═══════════════════════════════════════════════════════
+     RESPONSIVE BREAKPOINTS — selaras dengan dokumen.html
+  ═══════════════════════════════════════════════════════ */
 
-  /* Tablet landscape ≤ 991px */
+  /* ≤ 1199 — desktop medium */
+  @media(max-width:1199.98px){
+    .page-body{padding:20px 20px 0}
+  }
+
+  /* ≤ 991 — TABLET & MOBILE: sidebar menjadi overlay */
   @media(max-width:991.98px){
-    .sidebar{transform:translateX(-100%);width:var(--sw)!important}
+    /* Sidebar: sembunyikan di luar layar */
+    .sidebar{transform:translateX(-100%);transition:transform .35s var(--ease);width:var(--sw)!important;z-index:400}
     .sidebar.sb-open{transform:translateX(0);box-shadow:8px 0 48px rgba(0,0,0,.75)}
     .sb-overlay.sb-open{display:block}
-    .main-wrap{margin-left:0!important}
+    /* Main wrap: lebar penuh, tanpa margin kiri */
+    .main-wrap{margin-left:0!important;width:100%;max-width:100vw}
+    /* Topbar */
     .tb-search{display:none}
     .ut-info{display:none}
     .topbar{padding:0 14px}
+    /* Page body */
     .page-body{padding:16px 16px 0}
-    /* Toolbar: search baris penuh, selects wrap */
-    .tbar{gap:8px;padding:11px 13px}
+    /* Toolbar */
+    .tbar{flex-wrap:wrap;gap:8px;padding:11px 13px}
     .tbar-search{max-width:100%;min-width:0;flex:1 1 100%}
     .nsel{flex:1;min-width:0}
-    .tbar-right{margin-left:auto}
+    .tbar-right{margin-left:0;width:100%;justify-content:space-between}
+    .btn-add{flex:1;justify-content:center}
+    /* Footer */
+    .page-footer{padding:14px 20px}
   }
 
-  /* Tablet portrait ≤ 767px */
+  /* ≤ 767 — MOBILE */
   @media(max-width:767.98px){
     .page-body{padding:12px 12px 0}
     .pg-hd{flex-direction:column;align-items:flex-start;gap:10px;margin-bottom:16px}
@@ -324,48 +338,38 @@
     .pg-actions .btn-add{width:100%;justify-content:center;height:40px}
     .tbar{padding:10px 12px}
     .tbl-foot{flex-direction:column;align-items:center;gap:8px}
-    .page-footer{flex-direction:column;align-items:center;text-align:center;gap:7px}
+    .page-footer{flex-direction:column;align-items:center;text-align:center;gap:7px;padding:14px 16px}
     .ft-links{justify-content:center}
     .prev-meta-grid{grid-template-columns:1fr}
   }
 
-  /* ── Smartphone custom ≤ 575px ──
-     Satu-satunya tempat tabel bisa scroll horizontal.
-     Semua elemen lain fit layar.             ── */
+  /* ≤ 575 — SMALL MOBILE */
   @media(max-width:575.98px){
     .page-body{padding:10px 10px 0}
     .topbar{padding:0 10px;gap:8px}
     .pg-ico{width:40px;height:40px;font-size:19px}
     .pg-title{font-size:17px}
     .pg-sub{font-size:11px}
-    /* pg-actions: tombol lebar penuh */
-    .pg-actions{width:100%}
-    .pg-actions .btn-add{width:100%;justify-content:center;height:38px}
     /* Toolbar: search penuh, select 2 kolom, tombol penuh */
     .tbar{gap:7px;padding:10px}
-    .tbar-search{flex:1 1 100%;max-width:100%}
     .nsel{flex:1 1 calc(50% - 4px);min-width:0;height:36px;font-size:12px}
-    .tbar-right{width:100%;margin-left:0}
-    .tbar-right .btn-add{width:100%;justify-content:center;height:36px}
-    /* TABEL: scroll horizontal HANYA di sini */
-    .tbl-scroll-mob{overflow-x:auto;-webkit-overflow-scrolling:touch}
-    .tbl-scroll-mob::-webkit-scrollbar{height:4px}
-    .tbl-scroll-mob::-webkit-scrollbar-thumb{background:rgba(255,77,109,.3);border-radius:3px}
-    .tbl-scroll-mob .dtbl{min-width:780px}
-    /* Scroll hint tampil */
-    .scroll-hint-mob{display:flex!important}
-    /* Pagination kecil */
-    .tbl-foot{flex-direction:column;align-items:center;gap:8px;padding:10px 12px}
-    .pb{width:30px;height:30px;font-size:11px}
-    /* FAB & footer */
+    .tbar-right{width:100%;margin-left:0;justify-content:stretch}
+    .tbar-right .btn-add{width:100%;justify-content:center;height:36px;flex:1 1 auto}
     .fab{bottom:12px;right:10px;width:46px;height:46px}
     .fab-inner{font-size:17px}
-    .page-footer{flex-direction:column;align-items:center;text-align:center;gap:7px}
-    .ft-links{justify-content:center}
-    /* Modal */
     .m-bd{padding:14px}.m-ft{padding:12px 14px}.m-hd{padding:14px}
-    .modal-dialog{margin:8px}
-    .prev-meta-grid{grid-template-columns:1fr}
+    .page-footer{padding:14px 14px}
+    .ft-links{gap:10px;flex-wrap:wrap;justify-content:center}
+    .tbl-foot{flex-direction:column;align-items:center;gap:8px;padding:10px 12px}
+    .pb{width:30px;height:30px;font-size:11px}
+    .user-trigger{padding:5px 8px 5px 6px}
+  }
+
+  /* ≤ 380 — ULTRA SMALL MOBILE */
+  @media(max-width:380px){
+    .topbar{padding:0 8px;gap:6px}
+    .page-body{padding:8px 8px 0}
+    .pb{width:28px;height:28px;font-size:11px}
   }
 </style>
 </head>
@@ -565,12 +569,7 @@
 
       <!-- Table Card -->
       <div class="tbl-card" data-aos="fade-up" data-aos-delay="60">
-        <!-- Scroll hint: tersembunyi default, muncul ≤575px via CSS -->
-        <div class="scroll-hint-mob" style="display:none;align-items:center;gap:6px;padding:7px 14px;background:rgba(255,77,109,.04);border-bottom:1px solid rgba(255,77,109,.1);font-family:var(--mono);font-size:11px;color:var(--muted)">
-          <i class="bi bi-arrow-right-short" style="font-size:16px;color:var(--err)"></i>
-          Geser tabel ke kanan untuk melihat kolom lainnya
-        </div>
-        <div class="tbl-scroll-mob">
+        <div class="table-responsive">
           <table class="dtbl">
             <thead>
               <tr>
@@ -879,7 +878,7 @@
      MODAL: PREVIEW LAPORAN
 ═══════════════════════════ -->
 <div class="modal fade m-dark m-red" id="previewModal" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered modal-lg">
+  <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
     <div class="modal-content">
       <div class="m-hd">
         <h5 class="m-hd-title"><i class="bi bi-eye-fill"></i> Detail Laporan</h5>
@@ -917,7 +916,7 @@
      MODAL: HAPUS LAPORAN
 ═══════════════════════════ -->
 <div class="modal fade m-dark m-red" id="delModal" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
     <div class="modal-content">
       <div class="m-hd">
         <h5 class="m-hd-title"><i class="bi bi-trash3-fill"></i> Hapus Laporan</h5>
@@ -943,7 +942,7 @@
      MODAL: LOGOUT
 ═══════════════════════════ -->
 <div class="modal fade m-dark m-red" id="logoutModal" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
     <div class="modal-content">
       <div class="m-hd">
         <h5 class="m-hd-title"><i class="bi bi-box-arrow-right"></i> Konfirmasi Logout</h5>

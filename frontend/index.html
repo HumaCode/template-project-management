@@ -1,0 +1,1257 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>PMS — Project Management System</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+/* ════════════════════════════════════════════════════════
+   VARIABLES & RESET
+════════════════════════════════════════════════════════ */
+:root{
+  --bg:#04090f;--bg2:#06101c;--bg3:#091522;
+  --cyan:#00d4ff;--cyan2:#0099cc;--cyan3:rgba(0,212,255,.1);
+  --amber:#f59e0b;--amber2:rgba(245,158,11,.1);
+  --green:#00e5a0;--green2:rgba(0,229,160,.1);
+  --red:#ff4d6d;--purple:#a78bfa;
+  --txt:#e8f0f8;--dim:#7a99b8;--muted:#3a556a;
+  --bd:rgba(0,212,255,.09);--bdh:rgba(0,212,255,.22);
+  --card:rgba(6,16,28,.9);--card2:rgba(9,21,36,.95);
+  --r:16px;--rs:10px;
+  --font:'DM Sans',sans-serif;
+  --display:'Syne',sans-serif;
+  --mono:'DM Mono',monospace;
+  --nav-h:68px;
+  --ease:cubic-bezier(.4,0,.2,1);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;scrollbar-width:thin;scrollbar-color:rgba(0,212,255,.18) transparent}
+html::-webkit-scrollbar{width:5px}
+html::-webkit-scrollbar-thumb{background:rgba(0,212,255,.2);border-radius:5px}
+body{font-family:var(--font);background:var(--bg);color:var(--txt);overflow-x:hidden;line-height:1.65}
+::selection{background:rgba(0,212,255,.25);color:#fff}
+a{text-decoration:none;color:inherit}
+button{font-family:var(--font)}
+
+/* ════════════════════════════════════════════════════════
+   CURSOR
+════════════════════════════════════════════════════════ */
+.cursor-dot{position:fixed;width:7px;height:7px;border-radius:50%;background:var(--cyan);pointer-events:none;z-index:9999;transform:translate(-50%,-50%);box-shadow:0 0 10px var(--cyan),0 0 20px rgba(0,212,255,.4);transition:transform .08s;will-change:transform}
+.cursor-ring{position:fixed;width:34px;height:34px;border-radius:50%;border:1.5px solid rgba(0,212,255,.45);pointer-events:none;z-index:9998;transform:translate(-50%,-50%);transition:width .2s,height .2s,border-color .2s,background .2s;will-change:transform}
+.cursor-ring.hov{width:50px;height:50px;border-color:var(--cyan);background:rgba(0,212,255,.05)}
+@media(max-width:991.98px){.cursor-dot,.cursor-ring{display:none}}
+
+/* ════════════════════════════════════════════════════════
+   CANVAS & BG
+════════════════════════════════════════════════════════ */
+#bgCanvas{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.55}
+.hex-grid{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='48'%3E%3Cpath d='M28 2L54 16v16L28 46 2 32V16Z' fill='none' stroke='rgba(0,212,255,0.035)' stroke-width='1'/%3E%3C/svg%3E");
+  background-size:56px 48px;animation:hexmov 50s linear infinite}
+@keyframes hexmov{to{background-position:56px 48px}}
+.scan-line{position:fixed;width:100%;height:2px;background:linear-gradient(90deg,transparent 0%,rgba(0,212,255,.12) 30%,rgba(0,212,255,.3) 50%,rgba(0,212,255,.12) 70%,transparent 100%);z-index:1;pointer-events:none;animation:scanmov 12s ease-in-out infinite;opacity:0}
+@keyframes scanmov{0%{top:-5px;opacity:0}5%{opacity:1}90%{opacity:.4}100%{top:105vh;opacity:0}}
+
+/* ════════════════════════════════════════════════════════
+   NAVBAR
+════════════════════════════════════════════════════════ */
+#navbar{position:fixed;top:0;left:0;right:0;z-index:800;height:var(--nav-h);transition:all .4s var(--ease)}
+#navbar.scrolled{background:rgba(4,9,15,.94);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-bottom:1px solid var(--bd);box-shadow:0 4px 40px rgba(0,0,0,.45)}
+.nav-inner{max-width:1360px;margin:0 auto;padding:0 clamp(16px,4vw,48px);height:var(--nav-h);display:flex;align-items:center;gap:16px}
+/* logo */
+.nav-logo{display:flex;align-items:center;gap:10px;font-family:var(--display);font-size:19px;font-weight:800;flex-shrink:0;cursor:pointer}
+.logo-mark{width:38px;height:38px;border-radius:11px;background:linear-gradient(135deg,var(--cyan2),var(--cyan));display:grid;place-items:center;font-size:17px;color:#fff;flex-shrink:0;position:relative;overflow:hidden;box-shadow:0 0 18px rgba(0,212,255,.4)}
+.logo-mark::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.28),transparent 55%)}
+.logo-mark i{position:relative;z-index:1}
+.logo-txt{background:linear-gradient(135deg,#fff,var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+/* links */
+.nav-links{display:flex;align-items:center;gap:2px;margin-left:auto;list-style:none}
+.nav-links a{display:block;padding:7px 13px;border-radius:8px;font-size:13.5px;font-weight:500;color:var(--dim);transition:color .2s,background .2s;position:relative;white-space:nowrap}
+.nav-links a::after{content:'';position:absolute;bottom:3px;left:50%;right:50%;height:1.5px;background:var(--cyan);border-radius:2px;transition:left .28s var(--ease),right .28s var(--ease)}
+.nav-links a:hover,.nav-links a.active{color:var(--txt)}
+.nav-links a:hover::after,.nav-links a.active::after{left:13px;right:13px}
+.nav-links a.active{color:var(--cyan)}
+/* cta */
+.nav-cta{display:inline-flex;align-items:center;gap:7px;padding:9px 22px;border-radius:var(--rs);background:linear-gradient(135deg,var(--cyan2),var(--cyan));font-size:13.5px;font-weight:600;color:#fff;border:none;cursor:pointer;position:relative;overflow:hidden;transition:all .3s;flex-shrink:0;box-shadow:0 0 22px rgba(0,212,255,.28)}
+.nav-cta::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,var(--cyan),var(--cyan2));opacity:0;transition:opacity .3s}
+.nav-cta:hover{transform:translateY(-1px);box-shadow:0 0 32px rgba(0,212,255,.5)}
+.nav-cta:hover::before{opacity:1}
+.nav-cta>span{position:relative;z-index:1;display:flex;align-items:center;gap:7px}
+/* hamburger */
+.nav-ham{display:none;width:38px;height:38px;border-radius:8px;background:rgba(0,212,255,.06);border:1px solid var(--bd);align-items:center;justify-content:center;cursor:pointer;color:var(--dim);font-size:18px;flex-shrink:0;transition:all .2s;-webkit-tap-highlight-color:transparent}
+.nav-ham:hover{background:rgba(0,212,255,.12);color:var(--cyan)}
+/* mobile drawer */
+.nav-drawer{position:fixed;top:var(--nav-h);left:0;right:0;z-index:799;background:rgba(4,9,15,.97);backdrop-filter:blur(20px);border-bottom:1px solid var(--bd);padding:12px 20px 20px;transform:translateY(-110%);opacity:0;transition:transform .38s var(--ease),opacity .38s;pointer-events:none}
+.nav-drawer.open{transform:translateY(0);opacity:1;pointer-events:all}
+.nav-drawer a{display:block;padding:11px 14px;border-radius:10px;font-size:15px;font-weight:500;color:var(--dim);transition:all .2s;margin-bottom:2px}
+.nav-drawer a:hover,.nav-drawer a.active{background:rgba(0,212,255,.08);color:var(--cyan)}
+.nav-drawer-cta{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:12px;padding:13px;border-radius:var(--rs);background:linear-gradient(135deg,var(--cyan2),var(--cyan));font-size:14px;font-weight:600;color:#fff;border:none;cursor:pointer}
+@media(max-width:991.98px){.nav-ham{display:flex}.nav-links,.nav-cta{display:none}}
+
+/* ════════════════════════════════════════════════════════
+   SCROLL REVEAL
+════════════════════════════════════════════════════════ */
+.reveal{opacity:0;transform:translateY(32px);transition:opacity .7s var(--ease),transform .7s var(--ease)}
+.reveal.up{opacity:1;transform:translateY(0)}
+.reveal-l{opacity:0;transform:translateX(-32px);transition:opacity .7s var(--ease),transform .7s var(--ease)}
+.reveal-l.up{opacity:1;transform:translateX(0)}
+.reveal-r{opacity:0;transform:translateX(32px);transition:opacity .7s var(--ease),transform .7s var(--ease)}
+.reveal-r.up{opacity:1;transform:translateX(0)}
+.reveal-s{opacity:0;transform:scale(.93);transition:opacity .6s var(--ease),transform .6s var(--ease)}
+.reveal-s.up{opacity:1;transform:scale(1)}
+
+/* ════════════════════════════════════════════════════════
+   SHARED SECTION STYLES
+════════════════════════════════════════════════════════ */
+section{position:relative;z-index:2}
+.sp{padding:clamp(64px,9vw,110px) 0}
+.container-xl{max-width:1320px;margin:0 auto;padding:0 clamp(16px,4vw,40px)}
+.sec-tag{display:inline-flex;align-items:center;gap:7px;padding:5px 13px;border-radius:20px;font-family:var(--mono);font-size:11px;letter-spacing:.8px;text-transform:uppercase;margin-bottom:14px}
+.sec-tag.c{background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.18);color:var(--cyan)}
+.sec-tag.a{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.18);color:var(--amber)}
+.sec-tag.g{background:rgba(0,229,160,.08);border:1px solid rgba(0,229,160,.18);color:var(--green)}
+.sec-tag.p{background:rgba(167,139,250,.08);border:1px solid rgba(167,139,250,.18);color:var(--purple)}
+.sec-tag i{font-size:11px}
+.sec-title{font-family:var(--display);font-weight:800;font-size:clamp(26px,4vw,46px);line-height:1.12;letter-spacing:-1px;margin-bottom:14px}
+.sec-sub{font-size:16px;color:var(--dim);line-height:1.72;max-width:580px}
+.sec-line{width:44px;height:3px;border-radius:3px;margin:18px 0;background:linear-gradient(90deg,var(--cyan),transparent);box-shadow:0 0 10px var(--cyan)}
+.sec-line.a{background:linear-gradient(90deg,var(--amber),transparent);box-shadow:0 0 10px var(--amber)}
+.sec-line.g{background:linear-gradient(90deg,var(--green),transparent);box-shadow:0 0 10px var(--green)}
+.hl{background:linear-gradient(135deg,var(--cyan),var(--green));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hl-a{background:linear-gradient(135deg,var(--amber),var(--red));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+
+/* ════════════════════════════════════════════════════════
+   HERO
+════════════════════════════════════════════════════════ */
+#beranda{min-height:100vh;display:flex;align-items:center;padding-top:var(--nav-h);overflow:hidden;position:relative}
+.hero-glow{position:absolute;border-radius:50%;filter:blur(90px);pointer-events:none}
+.hg1{width:700px;height:700px;background:rgba(0,212,255,.055);top:-200px;left:-250px;animation:hgf1 14s ease-in-out infinite}
+.hg2{width:500px;height:500px;background:rgba(245,158,11,.04);bottom:-100px;right:-150px;animation:hgf2 17s ease-in-out infinite}
+.hg3{width:350px;height:350px;background:rgba(0,229,160,.045);top:30%;left:55%;animation:hgf3 11s ease-in-out infinite}
+@keyframes hgf1{0%,100%{transform:translate(0,0)}50%{transform:translate(70px,50px)}}
+@keyframes hgf2{0%,100%{transform:translate(0,0)}50%{transform:translate(-50px,-60px)}}
+@keyframes hgf3{0%,100%{transform:translate(0,0)}50%{transform:translate(40px,-35px)}}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;padding:6px 15px;border-radius:20px;background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.22);font-family:var(--mono);font-size:11.5px;color:var(--cyan);margin-bottom:22px;animation:fadein .6s .15s both}
+.hbdot{width:6px;height:6px;border-radius:50%;background:var(--cyan);box-shadow:0 0 8px var(--cyan);animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.7)}}
+@keyframes fadein{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+.hero-h1{font-family:var(--display);font-size:clamp(38px,6.5vw,80px);font-weight:800;line-height:1.05;letter-spacing:-2.5px;margin-bottom:24px;animation:fadein .6s .28s both}
+.hero-desc{font-size:clamp(15px,1.8vw,18px);color:var(--dim);max-width:560px;line-height:1.78;margin-bottom:36px;animation:fadein .6s .42s both}
+.hero-btns{display:flex;gap:12px;flex-wrap:wrap;animation:fadein .6s .55s both}
+.btn-p{display:inline-flex;align-items:center;gap:8px;padding:14px 28px;border-radius:var(--rs);background:linear-gradient(135deg,var(--cyan2),var(--cyan));border:none;color:#fff;font-size:15px;font-weight:600;cursor:pointer;position:relative;overflow:hidden;transition:all .3s;box-shadow:0 0 26px rgba(0,212,255,.32),0 4px 20px rgba(0,0,0,.3)}
+.btn-p::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,var(--cyan),var(--cyan2));opacity:0;transition:opacity .3s}
+.btn-p:hover{transform:translateY(-2px);box-shadow:0 0 42px rgba(0,212,255,.55),0 8px 28px rgba(0,0,0,.3)}
+.btn-p:hover::before{opacity:1}
+.btn-p>span{position:relative;z-index:1;display:flex;align-items:center;gap:8px}
+.btn-o{display:inline-flex;align-items:center;gap:8px;padding:13px 26px;border-radius:var(--rs);background:transparent;border:1.5px solid rgba(0,212,255,.28);color:var(--dim);font-size:15px;font-weight:500;cursor:pointer;transition:all .3s}
+.btn-o:hover{background:rgba(0,212,255,.08);color:var(--txt);border-color:var(--cyan);transform:translateY(-2px)}
+.hero-stats{display:flex;gap:30px;margin-top:52px;flex-wrap:wrap;animation:fadein .6s .7s both}
+.hstat{border-left:2px solid rgba(0,212,255,.18);padding-left:16px}
+.hstat-v{font-family:var(--mono);font-size:clamp(22px,3vw,30px);font-weight:700;color:var(--txt);line-height:1}
+.hstat-l{font-size:11.5px;color:var(--muted);margin-top:4px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.5px}
+/* hero visual mockup */
+.hero-right{position:relative;animation:fadein .8s .38s both,float 6s ease-in-out 1.2s infinite}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-16px)}}
+.mockup{background:var(--card2);border:1px solid var(--bd);border-radius:22px;padding:22px;position:relative;overflow:hidden;box-shadow:0 28px 80px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.04)}
+.mockup::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--cyan),var(--amber),var(--green),var(--cyan),transparent);background-size:200% 100%;animation:flow 3.5s linear infinite}
+@keyframes flow{to{background-position:200% 0}}
+.mkbar{display:flex;align-items:center;gap:8px;margin-bottom:18px}
+.mkdot{width:10px;height:10px;border-radius:50%}
+.d-r{background:#ff5f57}.d-y{background:#ffbd2e}.d-g{background:#28ca41}
+.mktitle{font-family:var(--mono);font-size:11px;color:var(--muted);margin-left:auto}
+.mkrow{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+.mkav{width:26px;height:26px;border-radius:50%;flex-shrink:0}
+.mkb{height:7px;border-radius:4px;flex:1}
+.mkb.bg{background:rgba(255,255,255,.06)}
+.mkb.bc{background:linear-gradient(90deg,var(--cyan2),var(--cyan));animation:bl 2.5s ease-in-out infinite}
+.mkb.ba{background:linear-gradient(90deg,#92400e,var(--amber));animation:bl 3.2s .4s ease-in-out infinite}
+.mkb.bgr{background:linear-gradient(90deg,#064e3b,var(--green));animation:bl 2.8s .8s ease-in-out infinite}
+@keyframes bl{0%,100%{opacity:.6;transform:scaleX(.92)}50%{opacity:1;transform:scaleX(1)}}
+.mkstats{display:flex;gap:8px;margin-top:14px}
+.mks{flex:1;background:rgba(0,0,0,.25);border:1px solid var(--bd);border-radius:9px;padding:9px 11px}
+.mks-v{font-family:var(--mono);font-size:16px;font-weight:700;color:var(--cyan)}
+.mks-l{font-size:9px;color:var(--muted);margin-top:2px;font-family:var(--mono)}
+.mkchart{height:56px;display:flex;align-items:flex-end;gap:3px;margin-top:14px;padding:8px;background:rgba(0,0,0,.2);border-radius:9px}
+.mcc{flex:1;border-radius:3px 3px 0 0;opacity:.8}
+.floatcard{position:absolute;background:var(--card2);border:1px solid var(--bdh);border-radius:13px;padding:11px 15px;box-shadow:0 8px 30px rgba(0,0,0,.4)}
+.fc1{top:-18px;right:-24px;animation:fc 4.5s ease-in-out infinite}
+.fc2{bottom:14px;left:-32px;animation:fc 5s 1.8s ease-in-out infinite}
+@keyframes fc{0%,100%{transform:translateY(0) rotate(0deg)}50%{transform:translateY(-9px) rotate(1.5deg)}}
+.fc-ico{font-size:18px;margin-bottom:4px}
+.fc-v{font-family:var(--mono);font-size:14px;font-weight:700;line-height:1}
+.fc-l{font-size:9px;color:var(--muted);font-family:var(--mono);margin-top:3px}
+.hero-orbit{position:absolute;border-radius:50%;border:1px dashed rgba(0,212,255,.08);pointer-events:none;animation:orb linear infinite}
+@keyframes orb{to{transform:rotate(360deg)}}
+
+/* ════════════════════════════════════════════════════════
+   CLIENTS MARQUEE
+════════════════════════════════════════════════════════ */
+#klien{position:relative;z-index:2;padding:24px 0;border-top:1px solid var(--bd);border-bottom:1px solid var(--bd);background:rgba(6,16,28,.6);overflow:hidden}
+.marquee-wrap{display:flex;overflow:hidden;mask-image:linear-gradient(90deg,transparent,black 15%,black 85%,transparent)}
+.marquee-track{display:flex;gap:48px;align-items:center;animation:marquee 22s linear infinite;flex-shrink:0;white-space:nowrap}
+.marquee-track2{animation-direction:reverse;animation-duration:28s}
+@keyframes marquee{to{transform:translateX(-50%)}}
+.cl-item{display:flex;align-items:center;gap:9px;font-family:var(--mono);font-size:13px;font-weight:500;color:var(--muted);opacity:.65;transition:opacity .3s;flex-shrink:0}
+.cl-item:hover{opacity:1;color:var(--dim)}
+.cl-item i{font-size:18px}
+
+/* ════════════════════════════════════════════════════════
+   FEATURES
+════════════════════════════════════════════════════════ */
+#fitur{background:linear-gradient(180deg,transparent,rgba(0,212,255,.02) 50%,transparent)}
+.feat-card{background:var(--card);border:1px solid var(--bd);border-radius:var(--r);padding:28px 24px;height:100%;position:relative;overflow:hidden;transition:border-color .3s,transform .35s,box-shadow .35s;cursor:default}
+.feat-card::before{content:'';position:absolute;inset:0;opacity:0;background:radial-gradient(ellipse at 50% 0%,rgba(0,212,255,.07),transparent 55%);transition:opacity .3s}
+.feat-card:hover{border-color:var(--bdh);transform:translateY(-7px);box-shadow:0 22px 60px rgba(0,0,0,.45)}
+.feat-card:hover::before{opacity:1}
+.feat-ico{width:52px;height:52px;border-radius:14px;display:grid;place-items:center;font-size:22px;margin-bottom:18px;position:relative;transition:transform .35s}
+.feat-card:hover .feat-ico{transform:scale(1.12) rotate(-6deg)}
+.fi-c{background:rgba(0,212,255,.1);color:var(--cyan)}
+.fi-a{background:rgba(245,158,11,.1);color:var(--amber)}
+.fi-g{background:rgba(0,229,160,.1);color:var(--green)}
+.fi-r{background:rgba(255,77,109,.1);color:var(--red)}
+.fi-p{background:rgba(167,139,250,.1);color:var(--purple)}
+.fi-o{background:rgba(249,115,22,.1);color:#fb923c}
+.feat-title{font-family:var(--display);font-size:17px;font-weight:700;margin-bottom:9px}
+.feat-desc{font-size:13.5px;color:var(--dim);line-height:1.65}
+.feat-chip{display:inline-block;margin-top:14px;font-family:var(--mono);font-size:10px;padding:3px 8px;border-radius:5px;background:rgba(0,212,255,.06);border:1px solid var(--bd);color:var(--muted)}
+
+/* ════════════════════════════════════════════════════════
+   ABOUT
+════════════════════════════════════════════════════════ */
+#tentang{background:linear-gradient(180deg,transparent,rgba(245,158,11,.018) 50%,transparent)}
+.about-visual{background:var(--card2);border:1px solid var(--bd);border-radius:20px;padding:22px;position:relative;overflow:hidden}
+.about-visual::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--amber),transparent);animation:flow 4s linear infinite}
+.ametric{background:rgba(0,0,0,.2);border:1px solid var(--bd);border-radius:11px;padding:14px 16px;display:flex;align-items:center;gap:14px;margin-bottom:10px;transition:border-color .25s}
+.ametric:hover{border-color:var(--bdh)}
+.am-ico{width:38px;height:38px;border-radius:9px;display:grid;place-items:center;font-size:17px;flex-shrink:0}
+.am-c{background:rgba(0,212,255,.1);color:var(--cyan)}
+.am-a{background:rgba(245,158,11,.1);color:var(--amber)}
+.am-g{background:rgba(0,229,160,.1);color:var(--green)}
+.am-v{font-family:var(--mono);font-size:22px;font-weight:700;color:var(--txt);line-height:1}
+.am-l{font-size:11px;color:var(--muted);font-family:var(--mono);margin-top:2px}
+.about-list{list-style:none;margin-top:16px}
+.about-list li{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid rgba(0,212,255,.05);font-size:14px;color:var(--dim);line-height:1.55}
+.about-list li:last-child{border-bottom:none}
+.al-ico{color:var(--cyan);font-size:15px;flex-shrink:0;margin-top:1px}
+.about-badge-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:24px}
+.abadge{display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border-radius:20px;font-family:var(--mono);font-size:11px;background:rgba(0,212,255,.06);border:1px solid var(--bd);color:var(--dim);transition:all .2s}
+.abadge:hover{border-color:var(--cyan);color:var(--cyan);background:rgba(0,212,255,.1)}
+
+/* ════════════════════════════════════════════════════════
+   HOW IT WORKS
+════════════════════════════════════════════════════════ */
+#cara-kerja{background:linear-gradient(180deg,transparent,rgba(245,158,11,.025) 50%,transparent)}
+.step-card{background:var(--card);border:1px solid var(--bd);border-radius:var(--r);padding:32px 24px;text-align:center;height:100%;position:relative;overflow:hidden;transition:all .35s}
+.step-card:hover{border-color:rgba(245,158,11,.3);transform:translateY(-5px);box-shadow:0 18px 50px rgba(0,0,0,.4)}
+.step-num{width:54px;height:54px;border-radius:50%;background:rgba(245,158,11,.1);border:2px solid rgba(245,158,11,.28);display:grid;place-items:center;font-family:var(--mono);font-size:19px;font-weight:700;color:var(--amber);margin:0 auto 20px;box-shadow:0 0 22px rgba(245,158,11,.18)}
+.step-title{font-family:var(--display);font-size:17px;font-weight:700;margin-bottom:9px}
+.step-desc{font-size:13.5px;color:var(--dim);line-height:1.65}
+.step-arrow{position:absolute;top:50%;right:-14px;transform:translateY(-50%);font-size:22px;color:rgba(245,158,11,.25);z-index:3;display:none}
+
+/* ════════════════════════════════════════════════════════
+   STATS
+════════════════════════════════════════════════════════ */
+#statistik{background:linear-gradient(135deg,rgba(0,212,255,.03),transparent,rgba(0,229,160,.03));border-top:1px solid var(--bd);border-bottom:1px solid var(--bd)}
+.stat-item{text-align:center;padding:28px 20px;position:relative}
+.stat-item::after{content:'';position:absolute;right:0;top:25%;height:50%;width:1px;background:linear-gradient(to bottom,transparent,var(--bd),transparent)}
+.stat-item:last-child::after{display:none}
+.snum{font-family:var(--mono);font-size:clamp(36px,5.5vw,58px);font-weight:700;background:linear-gradient(135deg,var(--txt),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1;margin-bottom:8px}
+.slbl{font-size:13px;color:var(--muted);font-family:var(--mono);text-transform:uppercase;letter-spacing:1px}
+
+/* ════════════════════════════════════════════════════════
+   TESTIMONIALS
+════════════════════════════════════════════════════════ */
+#testimoni{background:linear-gradient(180deg,transparent,rgba(0,212,255,.02) 50%,transparent)}
+.tcard{background:var(--card);border:1px solid var(--bd);border-radius:var(--r);padding:28px;height:100%;position:relative;overflow:hidden;transition:all .3s}
+.tcard::before{content:'';position:absolute;top:0;left:0;width:3px;height:100%;background:linear-gradient(to bottom,var(--cyan),var(--green));border-radius:var(--r) 0 0 var(--r)}
+.tcard:hover{border-color:var(--bdh);transform:translateY(-5px);box-shadow:0 18px 50px rgba(0,0,0,.4)}
+.tquote{font-size:34px;color:var(--cyan);opacity:.38;font-family:serif;line-height:1;margin-bottom:12px}
+.ttext{font-size:14px;color:var(--dim);line-height:1.78;margin-bottom:20px;font-style:italic}
+.tauthor{display:flex;align-items:center;gap:12px}
+.tav{width:42px;height:42px;border-radius:50%;flex-shrink:0;display:grid;place-items:center;font-family:var(--mono);font-size:13px;font-weight:700;color:#fff}
+.tnm{font-size:14px;font-weight:600}
+.trole{font-size:11.5px;color:var(--muted);font-family:var(--mono);margin-top:2px}
+.tstars{color:var(--amber);font-size:12px;letter-spacing:1px;margin-top:4px}
+
+/* ════════════════════════════════════════════════════════
+   PRICING
+════════════════════════════════════════════════════════ */
+#harga{background:linear-gradient(180deg,transparent,rgba(0,229,160,.02) 50%,transparent)}
+.pcard{background:var(--card);border:1px solid var(--bd);border-radius:20px;padding:34px 28px;height:100%;position:relative;overflow:hidden;transition:all .35s}
+.pcard.pop{border-color:rgba(0,229,160,.32);background:linear-gradient(160deg,rgba(0,229,160,.04),var(--card));box-shadow:0 0 44px rgba(0,229,160,.1)}
+.pcard:hover{transform:translateY(-7px);box-shadow:0 26px 64px rgba(0,0,0,.45)}
+.pop-tag{position:absolute;top:-1px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#064e3b,var(--green));color:#fff;font-family:var(--mono);font-size:10px;font-weight:700;padding:4px 15px;border-radius:0 0 10px 10px;letter-spacing:1px;box-shadow:0 4px 14px rgba(0,229,160,.28)}
+.pname{font-family:var(--display);font-size:20px;font-weight:800;margin-bottom:6px}
+.pdesc{font-size:13px;color:var(--muted);margin-bottom:22px}
+.pval{display:flex;align-items:baseline;gap:4px;margin-bottom:26px}
+.pcur{font-family:var(--mono);font-size:15px;color:var(--dim);margin-top:5px}
+.pnum{font-family:var(--mono);font-size:42px;font-weight:700;color:var(--txt);line-height:1}
+.pper{font-size:13px;color:var(--muted)}
+.plist{list-style:none;margin-bottom:28px}
+.plist li{display:flex;align-items:center;gap:9px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.035);font-size:13.5px;color:var(--dim)}
+.plist li:last-child{border-bottom:none}
+.pi-y{color:var(--green);font-size:14px;flex-shrink:0}
+.pi-n{color:var(--muted);font-size:14px;flex-shrink:0;opacity:.4}
+.pbtn{width:100%;padding:13px;border-radius:var(--rs);font-size:14px;font-weight:600;cursor:pointer;border:none;transition:all .3s}
+.pbtn.out{background:transparent;border:1.5px solid rgba(0,212,255,.28);color:var(--dim)}
+.pbtn.out:hover{background:rgba(0,212,255,.08);color:var(--txt);border-color:var(--cyan)}
+.pbtn.fil{background:linear-gradient(135deg,#064e3b,var(--green));color:#fff;box-shadow:0 0 22px rgba(0,229,160,.22)}
+.pbtn.fil:hover{box-shadow:0 0 34px rgba(0,229,160,.4);transform:translateY(-1px)}
+
+/* ════════════════════════════════════════════════════════
+   CONTACT
+════════════════════════════════════════════════════════ */
+#kontak{background:linear-gradient(180deg,transparent,rgba(0,212,255,.025) 50%,transparent)}
+.cform{background:var(--card2);border:1px solid var(--bd);border-radius:20px;padding:clamp(24px,4vw,46px);position:relative;overflow:hidden}
+.cform::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--cyan),var(--amber),var(--green),transparent);background-size:200% 100%;animation:flow 4.5s linear infinite}
+.flbl{font-size:11.5px;font-weight:600;color:var(--dim);font-family:var(--mono);text-transform:uppercase;letter-spacing:.8px;display:block;margin-bottom:7px}
+.finput{width:100%;height:44px;border-radius:var(--rs);background:rgba(0,0,0,.3);border:1px solid rgba(0,212,255,.11);padding:0 14px;color:var(--txt);font-family:var(--font);font-size:14px;outline:none;transition:border-color .25s,background .25s}
+.finput:focus{border-color:rgba(0,212,255,.38);background:rgba(0,212,255,.04)}
+.finput::placeholder{color:var(--muted)}
+.fta{width:100%;height:120px;padding:12px 14px;resize:none;border-radius:var(--rs);background:rgba(0,0,0,.3);border:1px solid rgba(0,212,255,.11);color:var(--txt);font-family:var(--font);font-size:14px;outline:none;transition:border-color .25s;line-height:1.6}
+.fta:focus{border-color:rgba(0,212,255,.38)}
+.fta::placeholder{color:var(--muted)}
+.bsend{width:100%;height:48px;border-radius:var(--rs);background:linear-gradient(135deg,var(--cyan2),var(--cyan));border:none;color:#fff;font-size:15px;font-weight:600;cursor:pointer;position:relative;overflow:hidden;transition:all .3s;box-shadow:0 0 22px rgba(0,212,255,.28)}
+.bsend::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,var(--cyan),var(--cyan2));opacity:0;transition:opacity .3s}
+.bsend:hover{transform:translateY(-1px);box-shadow:0 0 36px rgba(0,212,255,.5)}
+.bsend:hover::before{opacity:1}
+.bsend>span{position:relative;z-index:1;display:flex;align-items:center;justify-content:center;gap:8px}
+.cinfo-item{display:flex;gap:14px;padding:18px 0;border-bottom:1px solid rgba(0,212,255,.06);align-items:flex-start}
+.cinfo-item:last-child{border-bottom:none}
+.ci-ico{width:42px;height:42px;border-radius:10px;display:grid;place-items:center;font-size:18px;flex-shrink:0;transition:transform .25s}
+.cinfo-item:hover .ci-ico{transform:scale(1.1)}
+.ci-c{background:rgba(0,212,255,.1);color:var(--cyan)}
+.ci-a{background:rgba(245,158,11,.1);color:var(--amber)}
+.ci-g{background:rgba(0,229,160,.1);color:var(--green)}
+.ci-p{background:rgba(167,139,250,.1);color:var(--purple)}
+.ci-title{font-size:13px;font-weight:600;margin-bottom:3px}
+.ci-val{font-size:13px;color:var(--dim);font-family:var(--mono)}
+
+/* ════════════════════════════════════════════════════════
+   FOOTER
+════════════════════════════════════════════════════════ */
+#footer{background:var(--bg2);border-top:1px solid var(--bd);padding:64px 0 0;position:relative;z-index:2;overflow:hidden}
+#footer::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--cyan),var(--amber),var(--green),var(--cyan),transparent);opacity:.35}
+.ft-bg-glow{position:absolute;width:500px;height:300px;background:rgba(0,212,255,.03);border-radius:50%;filter:blur(80px);top:-50px;left:-100px;pointer-events:none}
+.ft-desc{font-size:13.5px;color:var(--dim);line-height:1.72;max-width:270px;margin-top:12px}
+.ft-social{display:flex;gap:8px;margin-top:20px}
+.ft-social a{width:36px;height:36px;border-radius:9px;background:rgba(0,212,255,.06);border:1px solid var(--bd);display:grid;place-items:center;font-size:14px;color:var(--dim);transition:all .22s}
+.ft-social a:hover{background:rgba(0,212,255,.14);color:var(--cyan);border-color:var(--bdh);transform:translateY(-3px);box-shadow:0 6px 18px rgba(0,212,255,.2)}
+.ft-h{font-family:var(--display);font-size:12.5px;font-weight:700;text-transform:uppercase;letter-spacing:1.8px;color:var(--txt);margin-bottom:18px}
+.ft-ul{list-style:none}
+.ft-ul li{margin-bottom:10px}
+.ft-ul a{font-size:13.5px;color:var(--dim);transition:color .2s,padding-left .2s;display:flex;align-items:center;gap:0}
+.ft-ul a::before{content:'›';opacity:0;font-size:14px;color:var(--cyan);transition:opacity .2s,margin-right .2s;margin-right:0}
+.ft-ul a:hover{color:var(--cyan);padding-left:6px}
+.ft-ul a:hover::before{opacity:1;margin-right:6px}
+.ft-nl{background:rgba(0,212,255,.04);border:1px solid rgba(0,212,255,.12);border-radius:var(--r);padding:20px}
+.ft-nl p{font-size:13px;color:var(--dim);margin-bottom:12px;line-height:1.55}
+.ft-nl-row{display:flex;gap:8px}
+.ft-nl-in{flex:1;height:38px;border-radius:var(--rs);background:rgba(0,0,0,.3);border:1px solid rgba(0,212,255,.14);padding:0 12px;color:var(--txt);font-family:var(--font);font-size:13px;outline:none;transition:border-color .25s;min-width:0}
+.ft-nl-in:focus{border-color:rgba(0,212,255,.38)}
+.ft-nl-in::placeholder{color:var(--muted)}
+.ft-nl-btn{height:38px;padding:0 16px;border-radius:var(--rs);background:linear-gradient(135deg,var(--cyan2),var(--cyan));border:none;color:#fff;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;transition:all .3s;flex-shrink:0}
+.ft-nl-btn:hover{box-shadow:0 0 18px rgba(0,212,255,.4);transform:translateY(-1px)}
+.ft-sep{height:1px;background:rgba(0,212,255,.07);margin-top:52px}
+.ft-bottom{padding:18px 0;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.ft-copy{font-family:var(--mono);font-size:11.5px;color:var(--muted)}
+.ft-copy span{color:var(--cyan);opacity:.8}
+.ft-online{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11.5px;color:var(--green)}
+.ft-sdot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);animation:pulse 2s ease-in-out infinite}
+.ft-blinks{display:flex;gap:16px}
+.ft-blinks a{font-family:var(--mono);font-size:11.5px;color:var(--muted);transition:color .2s}
+.ft-blinks a:hover{color:var(--cyan)}
+
+/* ════════════════════════════════════════════════════════
+   FAB
+════════════════════════════════════════════════════════ */
+.fab{position:fixed;bottom:30px;right:26px;z-index:600;width:58px;height:58px;border:none;background:none;padding:0;cursor:pointer;opacity:0;visibility:hidden;transform:translateY(24px) scale(.8);transition:opacity .45s var(--ease),visibility .45s,transform .5s cubic-bezier(.34,1.56,.64,1);-webkit-tap-highlight-color:transparent}
+.fab.on{opacity:1;visibility:visible;transform:translateY(0) scale(1)}
+.fab-trail{position:absolute;inset:-8px;border-radius:50%;background:conic-gradient(var(--cyan) 0deg,var(--amber) 80deg,var(--green) 160deg,rgba(0,100,150,.1) 260deg,var(--cyan) 360deg);animation:faborg 2.2s linear infinite}
+.fab-trail2{position:absolute;inset:-4px;border-radius:50%;background:conic-gradient(transparent 0deg,transparent 40deg,rgba(0,212,255,.35) 160deg,transparent 280deg);animation:faborg 3.5s linear infinite reverse}
+@keyframes faborg{to{transform:rotate(360deg)}}
+.fab-core{position:absolute;inset:5px;border-radius:50%;background:linear-gradient(135deg,#071320,#0a1c2e);display:grid;place-items:center;font-size:21px;color:var(--cyan);transition:all .3s;box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 0 0 1px rgba(0,212,255,.12)}
+.fab:hover .fab-core{background:linear-gradient(135deg,var(--cyan2),var(--cyan));color:#fff;box-shadow:0 0 28px rgba(0,212,255,.55)}
+.fab-ping{position:absolute;inset:10px;border-radius:50%;border:1.5px solid rgba(0,212,255,.35);animation:fabping 2.2s ease-out infinite}
+@keyframes fabping{0%{transform:scale(1);opacity:.55}100%{transform:scale(2.6);opacity:0}}
+/* SVG progress ring */
+.fab-svg{position:absolute;inset:0;transform:rotate(-90deg)}
+.fab-svg circle{fill:none;stroke:rgba(0,212,255,.38);stroke-width:2.5;stroke-linecap:round;stroke-dasharray:163;stroke-dashoffset:163;transition:stroke-dashoffset .12s linear}
+/* scroll-to-top flash overlay */
+.fab-flash{position:fixed;inset:0;background:rgba(0,212,255,.06);z-index:599;pointer-events:none;opacity:0;transition:opacity .4s}
+.fab-flash.show{animation:flashfade .6s forwards}
+@keyframes flashfade{0%{opacity:1}100%{opacity:0}}
+
+/* ════════════════════════════════════════════════════════
+   RESPONSIVE
+════════════════════════════════════════════════════════ */
+@media(max-width:1199.98px){.hero-right{display:none}.hero-desc{max-width:100%}}
+@media(max-width:991.98px){.hero-stats{gap:20px}.sp{padding:clamp(56px,8vw,80px) 0}}
+@media(max-width:767.98px){
+  .hero-h1{letter-spacing:-1.5px}
+  .btn-o{display:none}
+  .hero-stats{gap:16px}.hstat-v{font-size:20px}
+  .stat-item::after{display:none}
+  .ft-bottom{flex-direction:column;align-items:center;text-align:center}
+  .ft-blinks{justify-content:center}
+  .fab{bottom:18px;right:14px;width:52px;height:52px}
+}
+@media(max-width:575.98px){
+  .sp{padding:44px 0}
+  .pcard{padding:26px 20px}
+  .cform{padding:22px 18px}
+  .ft-nl-row{flex-direction:column}
+  .ft-nl-btn{width:100%}
+}
+</style>
+</head>
+<body>
+
+<!-- Custom cursor -->
+<div class="cursor-dot" id="cd"></div>
+<div class="cursor-ring" id="cr"></div>
+
+<!-- Background -->
+<canvas id="bgCanvas"></canvas>
+<div class="hex-grid"></div>
+<div class="scan-line"></div>
+
+<!-- ══════════════════════════════════════════════════════
+     NAVBAR
+══════════════════════════════════════════════════════ -->
+<nav id="navbar">
+  <div class="nav-inner">
+    <a class="nav-logo" href="#beranda" onclick="smoothTo('#beranda')">
+      <div class="logo-mark"><i class="bi bi-diagram-3-fill"></i></div>
+      <span class="logo-txt">PMS</span>
+    </a>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="#beranda" data-sec="beranda" class="active">Beranda</a></li>
+      <li><a href="#fitur" data-sec="fitur">Fitur</a></li>
+      <li><a href="#tentang" data-sec="tentang">Tentang</a></li>
+      <li><a href="#cara-kerja" data-sec="cara-kerja">Cara Kerja</a></li>
+      <li><a href="#statistik" data-sec="statistik">Statistik</a></li>
+      <li><a href="#testimoni" data-sec="testimoni">Testimoni</a></li>
+      <li><a href="#harga" data-sec="harga">Harga</a></li>
+      <li><a href="#kontak" data-sec="kontak">Kontak</a></li>
+    </ul>
+    <button class="nav-cta" onclick="window.location.href='dashboard.html'">
+      <span><i class="bi bi-grid-3x3-gap-fill"></i> Dashboard</span>
+    </button>
+    <button class="nav-ham" id="navHam" aria-label="Menu">
+      <i class="bi bi-list" id="hamIco"></i>
+    </button>
+  </div>
+</nav>
+
+<!-- Mobile drawer -->
+<div class="nav-drawer" id="navDrawer">
+  <a href="#beranda" data-sec="beranda" class="active">Beranda</a>
+  <a href="#fitur" data-sec="fitur">Fitur</a>
+  <a href="#tentang" data-sec="tentang">Tentang</a>
+  <a href="#cara-kerja" data-sec="cara-kerja">Cara Kerja</a>
+  <a href="#statistik" data-sec="statistik">Statistik</a>
+  <a href="#testimoni" data-sec="testimoni">Testimoni</a>
+  <a href="#harga" data-sec="harga">Harga</a>
+  <a href="#kontak" data-sec="kontak">Kontak</a>
+  <button class="nav-drawer-cta" onclick="window.location.href='dashboard.html'">
+    <i class="bi bi-grid-3x3-gap-fill"></i> Masuk ke Dashboard
+  </button>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     HERO
+══════════════════════════════════════════════════════ -->
+<section id="beranda">
+  <div class="hero-glow hg1"></div>
+  <div class="hero-glow hg2"></div>
+  <div class="hero-glow hg3"></div>
+  <div class="container-xl">
+    <div class="row align-items-center g-5">
+      <div class="col-12 col-xl-6">
+        <div class="hero-badge"><span class="hbdot"></span> Platform Manajemen Proyek #1</div>
+        <h1 class="hero-h1">
+          Kelola Proyek<br>
+          <span class="hl">Lebih Cerdas.</span><br>
+          Lebih Cepat.
+        </h1>
+        <p class="hero-desc">Platform manajemen proyek all-in-one yang dirancang untuk tim modern. Pantau progres, kolaborasi real-time, dan capai target dengan lebih efisien.</p>
+        <div class="hero-btns">
+          <button class="btn-p" onclick="smoothTo('#kontak')"><span><i class="bi bi-rocket-takeoff-fill"></i> Mulai Gratis</span></button>
+          <button class="btn-o" onclick="smoothTo('#cara-kerja')"><i class="bi bi-play-circle-fill"></i> Lihat Demo</button>
+        </div>
+        <div class="hero-stats">
+          <div class="hstat"><div class="hstat-v" data-count="500">0</div><div class="hstat-l">Proyek Aktif</div></div>
+          <div class="hstat"><div class="hstat-v" data-count="1200">0</div><div class="hstat-l">Tim Pengguna</div></div>
+          <div class="hstat"><div class="hstat-v" data-count="99">0</div><div class="hstat-l">% Uptime</div></div>
+          <div class="hstat"><div class="hstat-v" data-count="48">0</div><div class="hstat-l">Integrasi</div></div>
+        </div>
+      </div>
+      <div class="col-xl-6 d-none d-xl-block">
+        <div class="hero-right">
+          <!-- Orbit rings -->
+          <div class="hero-orbit" style="inset:-60px;animation-duration:18s"></div>
+          <div class="hero-orbit" style="inset:-110px;animation-duration:28s;animation-direction:reverse"></div>
+          <!-- Floating cards -->
+          <div class="floatcard fc1">
+            <div class="fc-ico">🚀</div>
+            <div class="fc-v" style="color:var(--cyan)">+24%</div>
+            <div class="fc-l">Produktivitas</div>
+          </div>
+          <div class="floatcard fc2">
+            <div class="fc-ico">✅</div>
+            <div class="fc-v" style="color:var(--green)">128</div>
+            <div class="fc-l">Task selesai hari ini</div>
+          </div>
+          <!-- Main mockup card -->
+          <div class="mockup">
+            <div class="mkbar">
+              <span class="mkdot d-r"></span><span class="mkdot d-y"></span><span class="mkdot d-g"></span>
+              <span class="mktitle">pms-dashboard.app</span>
+            </div>
+            <!-- Progress rows -->
+            <div class="mkrow"><div class="mkav" style="background:linear-gradient(135deg,#0072c6,#00d4ff)"></div><div class="mkb bc" style="width:75%"></div><span style="font-family:var(--mono);font-size:10px;color:var(--cyan);white-space:nowrap">75%</span></div>
+            <div class="mkrow"><div class="mkav" style="background:linear-gradient(135deg,#92400e,#f59e0b)"></div><div class="mkb ba" style="width:54%"></div><span style="font-family:var(--mono);font-size:10px;color:var(--amber);white-space:nowrap">54%</span></div>
+            <div class="mkrow"><div class="mkav" style="background:linear-gradient(135deg,#064e3b,#00e5a0)"></div><div class="mkb bgr" style="width:88%"></div><span style="font-family:var(--mono);font-size:10px;color:var(--green);white-space:nowrap">88%</span></div>
+            <div class="mkrow"><div class="mkav" style="background:linear-gradient(135deg,#5b21b6,#a78bfa)"></div><div class="mkb" style="background:linear-gradient(90deg,#5b21b6,#a78bfa);width:42%;animation:bl 3s 1.2s ease-in-out infinite"></div><span style="font-family:var(--mono);font-size:10px;color:#a78bfa;white-space:nowrap">42%</span></div>
+            <!-- Mini stats -->
+            <div class="mkstats">
+              <div class="mks"><div class="mks-v">24</div><div class="mks-l">Proyek</div></div>
+              <div class="mks"><div class="mks-v" style="color:var(--amber)">8</div><div class="mks-l">Tim</div></div>
+              <div class="mks"><div class="mks-v" style="color:var(--green)">98%</div><div class="mks-l">On-time</div></div>
+            </div>
+            <!-- Chart bars -->
+            <div class="mkchart" id="mkChart"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════
+     CLIENTS MARQUEE
+══════════════════════════════════════════════════════ -->
+<div id="klien">
+  <div class="marquee-wrap">
+    <div class="marquee-track" id="mt1">
+      <span class="cl-item"><i class="bi bi-building"></i> PT Teknologi Maju</span>
+      <span class="cl-item"><i class="bi bi-globe"></i> Startup Digital ID</span>
+      <span class="cl-item"><i class="bi bi-bank"></i> BPD Jawa Tengah</span>
+      <span class="cl-item"><i class="bi bi-building-fill"></i> Pemerintah Kota</span>
+      <span class="cl-item"><i class="bi bi-laptop"></i> DevHouse Studio</span>
+      <span class="cl-item"><i class="bi bi-cpu"></i> TechCorp Indonesia</span>
+      <span class="cl-item"><i class="bi bi-graph-up"></i> FinTech Nusantara</span>
+      <span class="cl-item"><i class="bi bi-cloud"></i> CloudSys Platform</span>
+      <span class="cl-item"><i class="bi bi-building"></i> PT Teknologi Maju</span>
+      <span class="cl-item"><i class="bi bi-globe"></i> Startup Digital ID</span>
+      <span class="cl-item"><i class="bi bi-bank"></i> BPD Jawa Tengah</span>
+      <span class="cl-item"><i class="bi bi-building-fill"></i> Pemerintah Kota</span>
+      <span class="cl-item"><i class="bi bi-laptop"></i> DevHouse Studio</span>
+      <span class="cl-item"><i class="bi bi-cpu"></i> TechCorp Indonesia</span>
+      <span class="cl-item"><i class="bi bi-graph-up"></i> FinTech Nusantara</span>
+      <span class="cl-item"><i class="bi bi-cloud"></i> CloudSys Platform</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     FEATURES
+══════════════════════════════════════════════════════ -->
+<section id="fitur" class="sp">
+  <div class="container-xl">
+    <div class="text-center mb-5 reveal">
+      <div class="sec-tag c"><i class="bi bi-stars"></i> Fitur Unggulan</div>
+      <h2 class="sec-title">Semua yang Anda Butuhkan<br>dalam <span class="hl">Satu Platform</span></h2>
+      <div class="sec-line mx-auto"></div>
+      <p class="sec-sub mx-auto text-center">Fitur lengkap dirancang khusus untuk meningkatkan produktivitas tim dan transparansi proyek Anda.</p>
+    </div>
+    <div class="row g-4">
+      <div class="col-12 col-sm-6 col-lg-4 reveal" style="transition-delay:.05s">
+        <div class="feat-card">
+          <div class="feat-ico fi-c"><i class="bi bi-kanban-fill"></i></div>
+          <div class="feat-title">Manajemen Proyek</div>
+          <div class="feat-desc">Buat, kelola, dan pantau proyek dengan tampilan kanban, timeline, dan gantt chart interaktif secara real-time.</div>
+          <span class="feat-chip">Kanban · Timeline</span>
+        </div>
+      </div>
+      <div class="col-12 col-sm-6 col-lg-4 reveal" style="transition-delay:.10s">
+        <div class="feat-card">
+          <div class="feat-ico fi-a"><i class="bi bi-people-fill"></i></div>
+          <div class="feat-title">Manajemen Tim</div>
+          <div class="feat-desc">Atur peran dan hak akses anggota tim dengan sistem RBAC yang fleksibel dan mudah dikonfigurasi.</div>
+          <span class="feat-chip">RBAC · Role Management</span>
+        </div>
+      </div>
+      <div class="col-12 col-sm-6 col-lg-4 reveal" style="transition-delay:.15s">
+        <div class="feat-card">
+          <div class="feat-ico fi-g"><i class="bi bi-file-earmark-pdf-fill"></i></div>
+          <div class="feat-title">Laporan PDF</div>
+          <div class="feat-desc">Generate laporan profesional dalam format PDF dengan template yang dapat dikustomisasi sesuai kebutuhan.</div>
+          <span class="feat-chip">PDF · Export</span>
+        </div>
+      </div>
+      <div class="col-12 col-sm-6 col-lg-4 reveal" style="transition-delay:.20s">
+        <div class="feat-card">
+          <div class="feat-ico fi-r"><i class="bi bi-journal-text"></i></div>
+          <div class="feat-title">Catatan & Dokumen</div>
+          <div class="feat-desc">Editor teks kaya fitur dengan versioning dokumen, attachment file, dan kolaborasi catatan tim secara bersamaan.</div>
+          <span class="feat-chip">TinyMCE · Versioning</span>
+        </div>
+      </div>
+      <div class="col-12 col-sm-6 col-lg-4 reveal" style="transition-delay:.25s">
+        <div class="feat-card">
+          <div class="feat-ico fi-p"><i class="bi bi-graph-up-arrow"></i></div>
+          <div class="feat-title">Analitik & Dashboard</div>
+          <div class="feat-desc">Visualisasi data proyek secara mendetail dengan grafik interaktif, KPI tracker, dan laporan kemajuan otomatis.</div>
+          <span class="feat-chip">Analytics · Charts</span>
+        </div>
+      </div>
+      <div class="col-12 col-sm-6 col-lg-4 reveal" style="transition-delay:.30s">
+        <div class="feat-card">
+          <div class="feat-ico fi-o"><i class="bi bi-bell-fill"></i></div>
+          <div class="feat-title">Notifikasi Real-time</div>
+          <div class="feat-desc">Sistem notifikasi instan via email dan in-app untuk setiap perubahan, deadline, dan aktivitas penting tim Anda.</div>
+          <span class="feat-chip">Email · Push Notif</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════
+     ABOUT
+══════════════════════════════════════════════════════ -->
+<section id="tentang" class="sp">
+  <div class="container-xl">
+    <div class="row align-items-center g-5">
+      <div class="col-12 col-lg-6 reveal-l">
+        <div class="about-visual">
+          <div class="ametric"><div class="am-ico am-a"><i class="bi bi-trophy-fill"></i></div><div><div class="am-v">500+</div><div class="am-l">Proyek diselesaikan</div></div></div>
+          <div class="ametric"><div class="am-ico am-c"><i class="bi bi-people-fill"></i></div><div><div class="am-v">1,200+</div><div class="am-l">Pengguna aktif</div></div></div>
+          <div class="ametric"><div class="am-ico am-g"><i class="bi bi-clock-fill"></i></div><div><div class="am-v">99.9%</div><div class="am-l">Uptime terjamin</div></div></div>
+          <!-- Mini bar chart -->
+          <div style="margin-top:16px;padding:14px;background:rgba(0,0,0,.2);border:1px solid var(--bd);border-radius:11px">
+            <div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:1px">Proyek selesai per bulan</div>
+            <div style="display:flex;align-items:flex-end;gap:5px;height:50px">
+              <div style="flex:1;background:linear-gradient(to top,var(--cyan2),var(--cyan));border-radius:3px 3px 0 0;height:60%;opacity:.8"></div>
+              <div style="flex:1;background:linear-gradient(to top,var(--cyan2),var(--cyan));border-radius:3px 3px 0 0;height:75%"></div>
+              <div style="flex:1;background:linear-gradient(to top,var(--cyan2),var(--cyan));border-radius:3px 3px 0 0;height:55%;opacity:.8"></div>
+              <div style="flex:1;background:linear-gradient(to top,var(--cyan2),var(--cyan));border-radius:3px 3px 0 0;height:90%"></div>
+              <div style="flex:1;background:linear-gradient(to top,var(--amber),#fbbf24);border-radius:3px 3px 0 0;height:100%"></div>
+              <div style="flex:1;background:linear-gradient(to top,#064e3b,var(--green));border-radius:3px 3px 0 0;height:80%"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-12 col-lg-6 reveal-r">
+        <div class="sec-tag a"><i class="bi bi-info-circle-fill"></i> Tentang Platform</div>
+        <h2 class="sec-title">Dibangun untuk<br><span class="hl-a">Tim yang Ambisius</span></h2>
+        <div class="sec-line a"></div>
+        <p style="font-size:15px;color:var(--dim);line-height:1.75;margin-bottom:16px">PMS adalah platform manajemen proyek yang lahir dari kebutuhan nyata tim-tim profesional di Indonesia. Kami memahami tantangan koordinasi, deadline, dan transparansi dalam sebuah organisasi.</p>
+        <ul class="about-list">
+          <li><i class="bi bi-check-circle-fill al-ico"></i><span>Antarmuka intuitif yang bisa dipelajari dalam hitungan menit tanpa training panjang</span></li>
+          <li><i class="bi bi-check-circle-fill al-ico"></i><span>Integrasi dengan tools yang sudah Anda gunakan: Slack, Google Drive, Trello, dan lebih banyak lagi</span></li>
+          <li><i class="bi bi-check-circle-fill al-ico"></i><span>Data tersimpan aman dengan enkripsi SSL dan backup otomatis setiap 6 jam</span></li>
+          <li><i class="bi bi-check-circle-fill al-ico"></i><span>Support tim berpengalaman siap membantu 24/7 melalui chat dan email</span></li>
+        </ul>
+        <div class="about-badge-row">
+          <span class="abadge"><i class="bi bi-shield-fill-check"></i> SSL Secured</span>
+          <span class="abadge"><i class="bi bi-cloud-fill"></i> Cloud Backup</span>
+          <span class="abadge"><i class="bi bi-phone-fill"></i> Mobile Ready</span>
+          <span class="abadge"><i class="bi bi-code-slash"></i> REST API</span>
+          <span class="abadge"><i class="bi bi-lightning-fill"></i> Blazing Fast</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════
+     HOW IT WORKS
+══════════════════════════════════════════════════════ -->
+<section id="cara-kerja" class="sp">
+  <div class="container-xl">
+    <div class="text-center mb-5 reveal">
+      <div class="sec-tag a"><i class="bi bi-diagram-2-fill"></i> Cara Kerja</div>
+      <h2 class="sec-title">Mulai dalam <span class="hl-a">4 Langkah</span> Mudah</h2>
+      <div class="sec-line a mx-auto"></div>
+      <p class="sec-sub mx-auto text-center">Dari registrasi hingga proyek berjalan, semua bisa dilakukan dalam waktu kurang dari 10 menit.</p>
+    </div>
+    <div class="row g-4 position-relative">
+      <div class="col-12 col-sm-6 col-lg-3 reveal" style="transition-delay:.05s">
+        <div class="step-card">
+          <div class="step-num">01</div>
+          <div class="step-title">Daftar Akun</div>
+          <div class="step-desc">Buat akun gratis Anda hanya dalam 60 detik. Tidak perlu kartu kredit untuk memulai.</div>
+        </div>
+      </div>
+      <div class="col-12 col-sm-6 col-lg-3 reveal" style="transition-delay:.12s">
+        <div class="step-card">
+          <div class="step-num">02</div>
+          <div class="step-title">Buat Workspace</div>
+          <div class="step-desc">Setup workspace tim Anda, undang anggota, dan atur peran sesuai struktur organisasi.</div>
+        </div>
+      </div>
+      <div class="col-12 col-sm-6 col-lg-3 reveal" style="transition-delay:.20s">
+        <div class="step-card">
+          <div class="step-num">03</div>
+          <div class="step-title">Buat Proyek</div>
+          <div class="step-desc">Tambahkan proyek, bagi menjadi task-task kecil, assign ke anggota dan tentukan deadline.</div>
+        </div>
+      </div>
+      <div class="col-12 col-sm-6 col-lg-3 reveal" style="transition-delay:.28s">
+        <div class="step-card">
+          <div class="step-num">04</div>
+          <div class="step-title">Pantau & Analisis</div>
+          <div class="step-desc">Lacak progres real-time, generate laporan, dan optimalkan produktivitas tim Anda setiap hari.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════
+     STATS
+══════════════════════════════════════════════════════ -->
+<section id="statistik" class="sp">
+  <div class="container-xl">
+    <div class="row g-0">
+      <div class="col-6 col-lg-3 reveal" style="transition-delay:.05s">
+        <div class="stat-item">
+          <div class="snum" data-count="500">0</div>
+          <div class="slbl">Proyek Selesai</div>
+        </div>
+      </div>
+      <div class="col-6 col-lg-3 reveal" style="transition-delay:.12s">
+        <div class="stat-item">
+          <div class="snum" data-count="1200">0</div>
+          <div class="slbl">Pengguna Aktif</div>
+        </div>
+      </div>
+      <div class="col-6 col-lg-3 reveal" style="transition-delay:.20s">
+        <div class="stat-item">
+          <div class="snum" data-count="99">0</div>
+          <div class="slbl">% Kepuasan</div>
+        </div>
+      </div>
+      <div class="col-6 col-lg-3 reveal" style="transition-delay:.28s">
+        <div class="stat-item">
+          <div class="snum" data-count="48">0</div>
+          <div class="slbl">Integrasi Aktif</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════
+     TESTIMONIALS
+══════════════════════════════════════════════════════ -->
+<section id="testimoni" class="sp">
+  <div class="container-xl">
+    <div class="text-center mb-5 reveal">
+      <div class="sec-tag g"><i class="bi bi-chat-quote-fill"></i> Testimoni</div>
+      <h2 class="sec-title">Dipercaya oleh <span class="hl">Tim Terbaik</span></h2>
+      <div class="sec-line g mx-auto"></div>
+      <p class="sec-sub mx-auto text-center">Bergabung bersama ratusan tim yang sudah merasakan manfaat nyata dari platform kami.</p>
+    </div>
+    <div class="row g-4">
+      <div class="col-12 col-md-6 col-lg-4 reveal" style="transition-delay:.05s">
+        <div class="tcard">
+          <div class="tquote">"</div>
+          <p class="ttext">PMS mengubah cara kerja tim kami sepenuhnya. Sekarang semua progres proyek bisa dipantau secara real-time dan laporan bisa dibuat dalam hitungan detik.</p>
+          <div class="tauthor">
+            <div class="tav" style="background:linear-gradient(135deg,#0072c6,#00d4ff)">AR</div>
+            <div>
+              <div class="tnm">Andi Rahmat</div>
+              <div class="trole">Project Manager · PT Digital Nusantara</div>
+              <div class="tstars">★★★★★</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-12 col-md-6 col-lg-4 reveal" style="transition-delay:.12s">
+        <div class="tcard">
+          <div class="tquote">"</div>
+          <p class="ttext">Fitur manajemen tim dengan RBAC-nya sangat membantu. Kami bisa mengatur akses setiap anggota dengan presisi tanpa ribet konfigurasi yang panjang.</p>
+          <div class="tauthor">
+            <div class="tav" style="background:linear-gradient(135deg,#064e3b,#00e5a0)">SW</div>
+            <div>
+              <div class="tnm">Sari Widyaningsih</div>
+              <div class="trole">CTO · StartupIDBand</div>
+              <div class="tstars">★★★★★</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-12 col-md-6 col-lg-4 reveal" style="transition-delay:.20s">
+        <div class="tcard">
+          <div class="tquote">"</div>
+          <p class="ttext">Laporan PDF otomatis adalah fitur yang paling kami sukai. Presentasi ke klien jadi lebih profesional dan menghemat banyak waktu tim kami setiap minggu.</p>
+          <div class="tauthor">
+            <div class="tav" style="background:linear-gradient(135deg,#92400e,#f59e0b)">DK</div>
+            <div>
+              <div class="tnm">Deni Kurniawan</div>
+              <div class="trole">Team Lead · GovTech Pekalongan</div>
+              <div class="tstars">★★★★★</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════
+     PRICING
+══════════════════════════════════════════════════════ -->
+<section id="harga" class="sp">
+  <div class="container-xl">
+    <div class="text-center mb-5 reveal">
+      <div class="sec-tag g"><i class="bi bi-tag-fill"></i> Harga</div>
+      <h2 class="sec-title">Pilih Paket yang <span class="hl">Sesuai Kebutuhan</span></h2>
+      <div class="sec-line g mx-auto"></div>
+      <p class="sec-sub mx-auto text-center">Mulai gratis, upgrade kapan saja. Tidak ada biaya tersembunyi, tidak ada kontrak jangka panjang.</p>
+    </div>
+    <div class="row g-4 justify-content-center">
+      <div class="col-12 col-md-6 col-lg-4 reveal" style="transition-delay:.05s">
+        <div class="pcard">
+          <div class="pname">Starter</div>
+          <div class="pdesc">Cocok untuk tim kecil & personal project</div>
+          <div class="pval"><span class="pcur">Rp</span><span class="pnum">0</span><span class="pper">/bln</span></div>
+          <ul class="plist">
+            <li><i class="bi bi-check-circle-fill pi-y"></i> 3 Proyek aktif</li>
+            <li><i class="bi bi-check-circle-fill pi-y"></i> 5 Anggota tim</li>
+            <li><i class="bi bi-check-circle-fill pi-y"></i> 1GB penyimpanan</li>
+            <li><i class="bi bi-check-circle-fill pi-y"></i> Dashboard dasar</li>
+            <li><i class="bi bi-dash-circle-fill pi-n"></i> Laporan PDF</li>
+            <li><i class="bi bi-dash-circle-fill pi-n"></i> API access</li>
+            <li><i class="bi bi-dash-circle-fill pi-n"></i> Priority support</li>
+          </ul>
+          <button class="pbtn out">Mulai Gratis</button>
+        </div>
+      </div>
+      <div class="col-12 col-md-6 col-lg-4 reveal" style="transition-delay:.12s">
+        <div class="pcard pop">
+          <div class="pop-tag">PALING POPULER</div>
+          <div class="pname">Professional</div>
+          <div class="pdesc">Untuk tim profesional yang berkembang pesat</div>
+          <div class="pval"><span class="pcur">Rp</span><span class="pnum">149K</span><span class="pper">/bln</span></div>
+          <ul class="plist">
+            <li><i class="bi bi-check-circle-fill pi-y"></i> Proyek tidak terbatas</li>
+            <li><i class="bi bi-check-circle-fill pi-y"></i> 25 Anggota tim</li>
+            <li><i class="bi bi-check-circle-fill pi-y"></i> 20GB penyimpanan</li>
+            <li><i class="bi bi-check-circle-fill pi-y"></i> Dashboard lengkap</li>
+            <li><i class="bi bi-check-circle-fill pi-y"></i> Laporan PDF</li>
+            <li><i class="bi bi-check-circle-fill pi-y"></i> API access</li>
+            <li><i class="bi bi-dash-circle-fill pi-n"></i> Priority support</li>
+          </ul>
+          <button class="pbtn fil">Coba 14 Hari Gratis</button>
+        </div>
+      </div>
+      <div class="col-12 col-md-6 col-lg-4 reveal" style="transition-delay:.20s">
+        <div class="pcard">
+          <div class="pname">Enterprise</div>
+          <div class="pdesc">Solusi penuh untuk perusahaan & instansi</div>
+          <div class="pval"><span class="pcur">Rp</span><span class="pnum">399K</span><span class="pper">/bln</span></div>
+          <ul class="plist">
+            <li><i class="bi bi-check-circle-fill pi-y"></i> Proyek tidak terbatas</li>
+            <li><i class="bi bi-check-circle-fill pi-y"></i> Anggota tidak terbatas</li>
+            <li><i class="bi bi-check-circle-fill pi-y"></i> 100GB penyimpanan</li>
+            <li><i class="bi bi-check-circle-fill pi-y"></i> Custom branding</li>
+            <li><i class="bi bi-check-circle-fill pi-y"></i> Laporan PDF custom</li>
+            <li><i class="bi bi-check-circle-fill pi-y"></i> Full API access</li>
+            <li><i class="bi bi-check-circle-fill pi-y"></i> Priority 24/7 support</li>
+          </ul>
+          <button class="pbtn out">Hubungi Sales</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════
+     CONTACT
+══════════════════════════════════════════════════════ -->
+<section id="kontak" class="sp">
+  <div class="container-xl">
+    <div class="text-center mb-5 reveal">
+      <div class="sec-tag c"><i class="bi bi-envelope-fill"></i> Kontak</div>
+      <h2 class="sec-title">Siap untuk <span class="hl">Memulai?</span></h2>
+      <div class="sec-line mx-auto"></div>
+      <p class="sec-sub mx-auto text-center">Hubungi kami sekarang dan tim kami siap membantu Anda memulai perjalanan menuju proyek yang lebih terorganisir.</p>
+    </div>
+    <div class="row g-5 align-items-start">
+      <div class="col-12 col-lg-7 reveal-l">
+        <div class="cform">
+          <div class="row g-3">
+            <div class="col-12 col-sm-6">
+              <label class="flbl">Nama Lengkap <span style="color:var(--red)">*</span></label>
+              <input type="text" class="finput" placeholder="Nama Anda..."/>
+            </div>
+            <div class="col-12 col-sm-6">
+              <label class="flbl">Email <span style="color:var(--red)">*</span></label>
+              <input type="email" class="finput" placeholder="email@domain.com"/>
+            </div>
+            <div class="col-12 col-sm-6">
+              <label class="flbl">Nama Perusahaan</label>
+              <input type="text" class="finput" placeholder="PT / CV / Instansi..."/>
+            </div>
+            <div class="col-12 col-sm-6">
+              <label class="flbl">Paket yang Diminati</label>
+              <select class="finput" style="cursor:pointer;appearance:none;background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%237a99b8' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E\");background-repeat:no-repeat;background-position:right 12px center">
+                <option value="" style="background:#071320">-- Pilih paket --</option>
+                <option style="background:#071320">Starter (Gratis)</option>
+                <option style="background:#071320">Professional (Rp149K)</option>
+                <option style="background:#071320">Enterprise (Rp399K)</option>
+                <option style="background:#071320">Custom / Enterprise Plus</option>
+              </select>
+            </div>
+            <div class="col-12">
+              <label class="flbl">Pesan</label>
+              <textarea class="fta" placeholder="Ceritakan kebutuhan atau pertanyaan Anda..."></textarea>
+            </div>
+            <div class="col-12">
+              <button class="bsend"><span><i class="bi bi-send-fill"></i> Kirim Pesan</span></button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-12 col-lg-5 reveal-r">
+        <div style="padding-left:clamp(0px,2vw,20px)">
+          <div class="cinfo-item">
+            <div class="ci-ico ci-c"><i class="bi bi-geo-alt-fill"></i></div>
+            <div>
+              <div class="ci-title">Alamat Kantor</div>
+              <div class="ci-val">Jl. Hayam Wuruk No.28, Kota Pekalongan,<br>Jawa Tengah 51115</div>
+            </div>
+          </div>
+          <div class="cinfo-item">
+            <div class="ci-ico ci-a"><i class="bi bi-envelope-fill"></i></div>
+            <div>
+              <div class="ci-title">Email</div>
+              <div class="ci-val">hello@pmssystem.id<br>support@pmssystem.id</div>
+            </div>
+          </div>
+          <div class="cinfo-item">
+            <div class="ci-ico ci-g"><i class="bi bi-telephone-fill"></i></div>
+            <div>
+              <div class="ci-title">Telepon / WhatsApp</div>
+              <div class="ci-val">+62 812 3456 7890<br>Senin–Jumat, 09.00–18.00 WIB</div>
+            </div>
+          </div>
+          <div class="cinfo-item">
+            <div class="ci-ico ci-p"><i class="bi bi-clock-fill"></i></div>
+            <div>
+              <div class="ci-title">Response Time</div>
+              <div class="ci-val">Rata-rata balasan dalam &lt; 2 jam<br>Support 24/7 untuk paket Enterprise</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════
+     FOOTER
+══════════════════════════════════════════════════════ -->
+<footer id="footer">
+  <div class="ft-bg-glow"></div>
+  <div class="container-xl">
+    <div class="row g-5">
+      <!-- Brand -->
+      <div class="col-12 col-md-6 col-lg-4">
+        <div class="nav-logo mb-2" style="font-size:20px;cursor:default">
+          <div class="logo-mark"><i class="bi bi-diagram-3-fill"></i></div>
+          <span class="logo-txt">PMS</span>
+        </div>
+        <p class="ft-desc">Platform manajemen proyek modern yang membantu tim Indonesia bekerja lebih cerdas, terorganisir, dan produktif setiap harinya.</p>
+        <div class="ft-social">
+          <a href="#" aria-label="Instagram"><i class="bi bi-instagram"></i></a>
+          <a href="#" aria-label="LinkedIn"><i class="bi bi-linkedin"></i></a>
+          <a href="#" aria-label="Twitter"><i class="bi bi-twitter-x"></i></a>
+          <a href="#" aria-label="GitHub"><i class="bi bi-github"></i></a>
+          <a href="#" aria-label="YouTube"><i class="bi bi-youtube"></i></a>
+        </div>
+      </div>
+      <!-- Product -->
+      <div class="col-6 col-sm-4 col-lg-2">
+        <div class="ft-h">Produk</div>
+        <ul class="ft-ul">
+          <li><a href="#fitur">Fitur</a></li>
+          <li><a href="#harga">Harga</a></li>
+          <li><a href="#">Changelog</a></li>
+          <li><a href="#">Roadmap</a></li>
+          <li><a href="#">Status</a></li>
+        </ul>
+      </div>
+      <!-- Perusahaan -->
+      <div class="col-6 col-sm-4 col-lg-2">
+        <div class="ft-h">Perusahaan</div>
+        <ul class="ft-ul">
+          <li><a href="#tentang">Tentang</a></li>
+          <li><a href="#">Blog</a></li>
+          <li><a href="#">Karir</a></li>
+          <li><a href="#kontak">Kontak</a></li>
+          <li><a href="#">Partner</a></li>
+        </ul>
+      </div>
+      <!-- Newsletter -->
+      <div class="col-12 col-sm-4 col-lg-4">
+        <div class="ft-h">Newsletter</div>
+        <div class="ft-nl">
+          <p>Dapatkan update terbaru, tips produktivitas, dan promo eksklusif langsung ke inbox Anda.</p>
+          <div class="ft-nl-row">
+            <input type="email" class="ft-nl-in" placeholder="Email Anda..."/>
+            <button class="ft-nl-btn"><i class="bi bi-send-fill"></i> Subscribe</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="ft-sep"></div>
+    <div class="ft-bottom">
+      <div class="ft-copy">© 2025 <span>PMS</span> · Dibuat dengan ♥ di Indonesia</div>
+      <div class="ft-online"><div class="ft-sdot"></div> Semua sistem operasional</div>
+      <div class="ft-blinks">
+        <a href="#">Privasi</a>
+        <a href="#">Syarat</a>
+        <a href="#">Cookie</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<!-- ══════════════════════════════════════════════════════
+     FAB
+══════════════════════════════════════════════════════ -->
+<div class="fab-flash" id="fabFlash"></div>
+<button class="fab" id="fab" aria-label="Kembali ke atas">
+  <div class="fab-trail"></div>
+  <div class="fab-trail2"></div>
+  <div class="fab-ping"></div>
+  <div class="fab-core" id="fabCore"><i class="bi bi-chevron-up" id="fabIco"></i></div>
+  <!-- SVG progress ring -->
+  <svg class="fab-svg" viewBox="0 0 58 58">
+    <circle cx="29" cy="29" r="26" id="fabRing"/>
+  </svg>
+</button>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+/* ═══════════════════════════════════════════════════════
+   CANVAS BACKGROUND
+═══════════════════════════════════════════════════════ */
+(function(){
+  var cv=document.getElementById('bgCanvas'),ctx=cv.getContext('2d');
+  var W,H,pts=[];
+  function init(){
+    W=cv.width=window.innerWidth;
+    H=cv.height=window.innerHeight;
+    pts=[];
+    var n=Math.max(24,Math.floor(W*H/25000));
+    for(var i=0;i<n;i++)pts.push({
+      x:Math.random()*W,y:Math.random()*H,
+      vx:(Math.random()-.5)*.32,vy:(Math.random()-.5)*.32,
+      r:Math.random()*2.2+.6,p:Math.random()*Math.PI*2,
+      c:Math.random()<.6?[0,212,255]:Math.random()<.5?[245,158,11]:[0,229,160]
+    });
+  }
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    // Radial gradient center
+    var g=ctx.createRadialGradient(W*.5,H*.45,0,W*.5,H*.45,Math.max(W,H)*.65);
+    g.addColorStop(0,'rgba(0,212,255,.042)');g.addColorStop(1,'transparent');
+    ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+    // Connection lines
+    for(var i=0;i<pts.length;i++){
+      var a=pts[i];
+      for(var j=i+1;j<pts.length;j++){
+        var b=pts[j],dx=a.x-b.x,dy=a.y-b.y,d=Math.sqrt(dx*dx+dy*dy);
+        if(d<145){
+          ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);
+          ctx.strokeStyle='rgba(0,212,255,'+(1-d/145)*.11+')';
+          ctx.lineWidth=.7;ctx.stroke();
+        }
+      }
+    }
+    // Dots
+    pts.forEach(function(p){
+      p.x+=p.vx;p.y+=p.vy;p.p+=.014;
+      if(p.x<-12)p.x=W+12;if(p.x>W+12)p.x=-12;
+      if(p.y<-12)p.y=H+12;if(p.y>H+12)p.y=-12;
+      var a=.22+Math.sin(p.p)*.18,r=p.r*(.85+Math.sin(p.p)*.15);
+      ctx.beginPath();ctx.arc(p.x,p.y,r,0,Math.PI*2);
+      ctx.fillStyle='rgba('+p.c[0]+','+p.c[1]+','+p.c[2]+','+a+')';ctx.fill();
+    });
+    requestAnimationFrame(draw);
+  }
+  window.addEventListener('resize',function(){init();},{passive:true});
+  init();draw();
+})();
+
+/* ═══════════════════════════════════════════════════════
+   CURSOR
+═══════════════════════════════════════════════════════ */
+(function(){
+  var dot=document.getElementById('cd'),ring=document.getElementById('cr');
+  if(!dot||!ring)return;
+  var mx=0,my=0,rx=0,ry=0;
+  document.addEventListener('mousemove',function(e){mx=e.clientX;my=e.clientY;dot.style.left=mx+'px';dot.style.top=my+'px';},{passive:true});
+  function trackRing(){rx+=(mx-rx)*.18;ry+=(my-ry)*.18;ring.style.left=rx+'px';ring.style.top=ry+'px';requestAnimationFrame(trackRing);}
+  trackRing();
+  document.querySelectorAll('a,button,.feat-card,.tcard,.pcard,.step-card').forEach(function(el){
+    el.addEventListener('mouseenter',function(){ring.classList.add('hov')});
+    el.addEventListener('mouseleave',function(){ring.classList.remove('hov')});
+  });
+})();
+
+/* ═══════════════════════════════════════════════════════
+   MOCK CHART BARS
+═══════════════════════════════════════════════════════ */
+(function(){
+  var chart=document.getElementById('mkChart');
+  if(!chart)return;
+  var colors=['#0099cc','#00d4ff','#0099cc','#f59e0b','#00d4ff','#00e5a0','#a78bfa','#0099cc','#00d4ff','#00e5a0'];
+  var heights=[40,60,45,80,55,70,35,90,65,75];
+  heights.forEach(function(h,i){
+    var b=document.createElement('div');
+    b.className='mcc';
+    b.style.cssText='flex:1;border-radius:3px 3px 0 0;background:'+colors[i]+';height:'+h+'%;opacity:.75;transition:height .4s ease';
+    chart.appendChild(b);
+    setTimeout(function(){b.style.opacity='1'},300+i*80);
+  });
+})();
+
+/* ═══════════════════════════════════════════════════════
+   NAVBAR
+═══════════════════════════════════════════════════════ */
+var navbar=document.getElementById('navbar');
+var navHam=document.getElementById('navHam');
+var hamIco=document.getElementById('hamIco');
+var navDrawer=document.getElementById('navDrawer');
+var drawerOpen=false;
+
+window.addEventListener('scroll',function(){
+  navbar.classList.toggle('scrolled',window.scrollY>30);
+},{passive:true});
+
+navHam.addEventListener('click',function(){
+  drawerOpen=!drawerOpen;
+  navDrawer.classList.toggle('open',drawerOpen);
+  hamIco.className=drawerOpen?'bi bi-x-lg':'bi bi-list';
+});
+
+/* ═══════════════════════════════════════════════════════
+   SMOOTH SCROLL & ACTIVE LINK
+═══════════════════════════════════════════════════════ */
+function smoothTo(target){
+  var el=document.querySelector(target);
+  if(!el)return;
+  var offset=document.getElementById('navbar').offsetHeight+8;
+  var top=el.getBoundingClientRect().top+window.scrollY-offset;
+  window.scrollTo({top:top,behavior:'smooth'});
+  // close drawer
+  if(drawerOpen){drawerOpen=false;navDrawer.classList.remove('open');hamIco.className='bi bi-list';}
+}
+
+// Nav link clicks
+document.querySelectorAll('[data-sec]').forEach(function(link){
+  link.addEventListener('click',function(e){
+    e.preventDefault();
+    smoothTo('#'+this.dataset.sec);
+  });
+});
+
+// Active link on scroll
+var sections=document.querySelectorAll('section[id]');
+function onScroll(){
+  var scrollY=window.scrollY+document.getElementById('navbar').offsetHeight+60;
+  var current='beranda';
+  sections.forEach(function(s){
+    if(s.offsetTop<=scrollY) current=s.id;
+  });
+  document.querySelectorAll('[data-sec]').forEach(function(a){
+    a.classList.toggle('active',a.dataset.sec===current);
+  });
+}
+window.addEventListener('scroll',onScroll,{passive:true});
+
+/* ═══════════════════════════════════════════════════════
+   SCROLL REVEAL
+═══════════════════════════════════════════════════════ */
+(function(){
+  var obs=new IntersectionObserver(function(entries){
+    entries.forEach(function(e){if(e.isIntersecting){e.target.classList.add('up');}});
+  },{threshold:.12,rootMargin:'0px 0px -40px 0px'});
+  document.querySelectorAll('.reveal,.reveal-l,.reveal-r,.reveal-s').forEach(function(el){obs.observe(el);});
+})();
+
+/* ═══════════════════════════════════════════════════════
+   COUNTER ANIMATION
+═══════════════════════════════════════════════════════ */
+(function(){
+  var obs=new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(!e.isIntersecting)return;
+      var el=e.target,target=parseInt(el.getAttribute('data-count')),start=0,dur=1600;
+      var t0=null;
+      function step(ts){
+        if(!t0)t0=ts;
+        var progress=Math.min((ts-t0)/dur,1);
+        var ease=1-Math.pow(1-progress,3);
+        el.textContent=Math.round(start+(target-start)*ease)+(target>=99&&target<100?'':'')+(target>100?'+':'')+(target===99?'%':'');
+        if(progress<1)requestAnimationFrame(step);
+        else el.textContent=target+(target>100?'+':'')+(target===99?'%':'');
+      }
+      requestAnimationFrame(step);
+      obs.unobserve(el);
+    });
+  },{threshold:.5});
+  document.querySelectorAll('[data-count]').forEach(function(el){obs.observe(el);});
+})();
+
+/* ═══════════════════════════════════════════════════════
+   FAB
+═══════════════════════════════════════════════════════ */
+(function(){
+  var fab=document.getElementById('fab');
+  var fabRing=document.getElementById('fabRing');
+  var fabFlash=document.getElementById('fabFlash');
+  var circumference=163;
+  var scrolling=false;
+
+  window.addEventListener('scroll',function(){
+    if(!scrolling){
+      requestAnimationFrame(function(){
+        var show=window.scrollY>320;
+        fab.classList.toggle('on',show);
+        // Update progress ring
+        var max=document.documentElement.scrollHeight-window.innerHeight;
+        var progress=max>0?window.scrollY/max:0;
+        fabRing.style.strokeDashoffset=circumference-(circumference*progress);
+        scrolling=false;
+      });
+      scrolling=true;
+    }
+  },{passive:true});
+
+  fab.addEventListener('click',function(){
+    // Flash effect
+    fabFlash.classList.remove('show');
+    void fabFlash.offsetWidth;
+    fabFlash.classList.add('show');
+    // Bounce animation on icon
+    fab.style.transform='scale(.88)';
+    setTimeout(function(){fab.style.transform='';},180);
+    // Smooth scroll to top
+    window.scrollTo({top:0,behavior:'smooth'});
+  });
+})();
+</script>
+</body>
+</html>

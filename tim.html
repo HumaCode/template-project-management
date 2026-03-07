@@ -1,0 +1,1526 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Management Tim &mdash; Project Management System</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+  /* ══ Variables & Reset ══ */
+  :root{
+    --bg:#050e1d;--sw:260px;--swc:72px;--th:64px;
+    --cyan:#00c8ff;--blue:#0072c6;
+    --ok:#00e5a0;--warn:#f59e0b;--err:#ff4d6d;
+    --txt:#e2eaf4;--dim:#7a90a8;--muted:#3d5068;
+    --bd:rgba(0,200,255,.10);--bdh:rgba(0,200,255,.22);
+    --card:rgba(7,21,40,.95);
+    --ease:cubic-bezier(.4,0,.2,1);--dur:.3s;
+    --r:14px;--rs:8px;
+    --font:'Outfit',sans-serif;--mono:'DM Mono',monospace;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth;overflow-x:hidden}
+  body{font-family:var(--font);background:var(--bg);color:var(--txt);min-height:100vh;overflow-x:hidden;max-width:100vw}
+  a{text-decoration:none;color:inherit}
+  *{scrollbar-width:thin;scrollbar-color:rgba(0,200,255,.15) transparent}
+  *::-webkit-scrollbar{width:4px;height:4px}
+  *::-webkit-scrollbar-thumb{background:rgba(0,200,255,.2);border-radius:4px}
+
+  /* ══ Canvas ══ */
+  #bgc{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.4}
+
+  /* ══ Layout ══ */
+  .layout{display:flex;min-height:100vh;position:relative;z-index:1;width:100%;overflow-x:hidden}
+
+  /* ══════════════════════ SIDEBAR ══════════════════════ */
+  .sidebar{position:fixed;top:0;left:0;bottom:0;width:var(--sw);background:#050e1d;border-right:1px solid var(--bd);display:flex;flex-direction:column;z-index:400;transition:transform var(--dur) var(--ease),width var(--dur) var(--ease);overflow:hidden}
+  .sidebar::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--cyan),var(--blue),var(--cyan),transparent);background-size:200% 100%;animation:bflow 4s linear infinite;z-index:1}
+  @keyframes bflow{to{background-position:200% 0}}
+  .sidebar::after{content:'';position:absolute;inset:0;pointer-events:none;background-image:linear-gradient(rgba(0,200,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,200,255,.03) 1px,transparent 1px);background-size:28px 28px}
+  .sb-brand{display:flex;align-items:center;gap:12px;padding:0 18px;height:var(--th);border-bottom:1px solid var(--bd);flex-shrink:0;position:relative;z-index:1}
+  .sb-logo{width:38px;height:38px;flex-shrink:0;border-radius:10px;background:linear-gradient(135deg,var(--cyan),var(--blue));display:grid;place-items:center;font-size:18px;color:#fff;position:relative;overflow:hidden;animation:logopulse 3s ease-in-out infinite}
+  .sb-logo::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.25),transparent 60%)}
+  @keyframes logopulse{0%,100%{box-shadow:0 0 16px rgba(0,200,255,.35);transform:scale(1)}50%{box-shadow:0 0 28px rgba(0,200,255,.6);transform:scale(1.05)}}
+  .sb-title{overflow:hidden;white-space:nowrap;transition:opacity var(--dur) var(--ease)}
+  .sb-title .name{font-size:15px;font-weight:800;display:block}
+  .sb-title .sub{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase}
+  .sb-nav{flex:1;overflow-y:auto;overflow-x:hidden;padding:10px 0;position:relative;z-index:1}
+  .nav-section{padding:14px 20px 5px;font-family:var(--mono);font-size:9.5px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;white-space:nowrap;transition:opacity var(--dur) var(--ease)}
+  .nav-divider{height:1px;background:var(--bd);margin:6px 16px}
+  .nav-link{display:flex;align-items:center;gap:12px;padding:10px 20px;margin:1px 8px;border-radius:10px;color:var(--dim);font-size:13.5px;font-weight:500;cursor:pointer;position:relative;transition:background var(--dur) var(--ease),color var(--dur) var(--ease),transform var(--dur) var(--ease);white-space:nowrap;overflow:hidden}
+  .nav-link::before{content:'';position:absolute;left:0;top:20%;height:60%;width:3px;background:linear-gradient(to bottom,var(--cyan),var(--blue));border-radius:0 3px 3px 0;transform:scaleY(0);transition:transform .2s var(--ease)}
+  .nav-link:hover{background:rgba(0,200,255,.07);color:var(--txt);transform:translateX(3px)}
+  .nav-link:hover::before,.nav-link.active::before{transform:scaleY(1)}
+  .nav-link.active{background:linear-gradient(135deg,rgba(0,114,198,.2),rgba(0,200,255,.1));color:var(--cyan);border:1px solid rgba(0,200,255,.15)}
+  .nav-icon{width:20px;flex-shrink:0;display:grid;place-items:center;font-size:15px;color:var(--muted);transition:color var(--dur) var(--ease),transform var(--dur) var(--ease)}
+  .nav-link:hover .nav-icon,.nav-link.active .nav-icon{color:var(--cyan);transform:scale(1.15)}
+  .nav-text{transition:opacity var(--dur) var(--ease)}
+  .nav-badge{margin-left:auto;flex-shrink:0;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700;font-family:var(--mono);background:rgba(0,200,255,.15);color:var(--cyan);border:1px solid rgba(0,200,255,.2)}
+  .sb-footer{padding:14px 16px;border-top:1px solid var(--bd);flex-shrink:0;position:relative;z-index:1}
+  .sb-user{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--rs);background:rgba(0,200,255,.04);border:1px solid var(--bd);cursor:pointer;transition:background var(--dur) var(--ease),border-color var(--dur) var(--ease)}
+  .sb-user:hover{background:rgba(0,200,255,.09);border-color:var(--bdh)}
+  .sb-av{width:34px;height:34px;border-radius:50%;flex-shrink:0;background:linear-gradient(135deg,var(--cyan),var(--blue));display:grid;place-items:center;font-size:13px;font-weight:700;font-family:var(--mono);color:#fff;box-shadow:0 0 12px rgba(0,200,255,.3)}
+  .sb-user-info{overflow:hidden;flex:1;min-width:0}
+  .sb-user-info .uname{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .sb-user-info .urole{font-family:var(--mono);font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
+  .sb-chev{font-size:12px;color:var(--muted);flex-shrink:0;transition:color var(--dur) var(--ease)}
+  .sb-user:hover .sb-chev{color:var(--cyan)}
+  .sidebar.collapsed{width:var(--swc)}
+  .sidebar.collapsed .sb-title,.sidebar.collapsed .nav-text,.sidebar.collapsed .nav-badge,.sidebar.collapsed .nav-section,.sidebar.collapsed .sb-user-info,.sidebar.collapsed .sb-chev{opacity:0;width:0;pointer-events:none;overflow:hidden}
+  .sidebar.collapsed .nav-link{justify-content:center;padding:10px}
+  .sidebar.collapsed .sb-user{justify-content:center;padding:8px}
+  .sidebar.collapsed .nav-link::before{display:none}
+  .sidebar.collapsed .nav-link::after{content:attr(data-tip);position:absolute;left:calc(100% + 10px);top:50%;transform:translateY(-50%);background:#050e1d;border:1px solid var(--bdh);color:var(--txt);font-size:12px;font-weight:500;padding:5px 10px;border-radius:6px;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .15s;box-shadow:0 4px 20px rgba(0,0,0,.5);z-index:999}
+  .sidebar.collapsed .nav-link:hover::after{opacity:1}
+  .sb-overlay{display:none;position:fixed;inset:0;background:rgba(2,8,18,.78);z-index:300;cursor:pointer;backdrop-filter:blur(2px)}
+
+  /* ══════════════════════ MAIN WRAP ══════════════════════ */
+  .main-wrap{margin-left:var(--sw);flex:1;display:flex;flex-direction:column;min-height:100vh;transition:margin-left var(--dur) var(--ease);min-width:0;max-width:100%}
+  .main-wrap.sb-expanded{margin-left:var(--swc)}
+
+  /* ══════════════════════ TOPBAR ══════════════════════ */
+  .topbar{height:var(--th);position:sticky;top:0;z-index:200;background:rgba(5,14,29,.93);backdrop-filter:blur(16px);border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:12px;padding:0 20px}
+  .btn-toggle{width:36px;height:36px;flex-shrink:0;border-radius:var(--rs);background:rgba(0,200,255,.06);border:1px solid var(--bd);display:grid;place-items:center;cursor:pointer;color:var(--dim);font-size:17px;transition:background var(--dur),color var(--dur),transform var(--dur);-webkit-tap-highlight-color:transparent}
+  .btn-toggle:hover{background:rgba(0,200,255,.12);color:var(--cyan);border-color:var(--bdh);transform:scale(1.05)}
+  .tb-crumb{font-family:var(--mono);font-size:12px;color:var(--muted);display:flex;align-items:center;gap:5px}
+  .tb-crumb a{color:var(--muted);transition:color var(--dur)}.tb-crumb a:hover{color:var(--cyan)}
+  .tb-crumb .cur{color:var(--cyan)}
+  .tb-search{flex:1;max-width:280px;position:relative}
+  .tb-search input{width:100%;height:36px;border-radius:var(--rs);background:rgba(0,200,255,.05);border:1px solid var(--bd);padding:0 12px 0 36px;color:var(--txt);font-family:var(--font);font-size:13px;outline:none;transition:border-color .25s,background .25s}
+  .tb-search input:focus{border-color:rgba(0,200,255,.3);background:rgba(0,200,255,.08)}
+  .tb-search input::placeholder{color:var(--muted)}
+  .tb-search i{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:14px}
+  .tb-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+  .btn-bell{width:36px;height:36px;border-radius:var(--rs);background:rgba(0,200,255,.05);border:1px solid var(--bd);display:grid;place-items:center;cursor:pointer;color:var(--dim);font-size:17px;position:relative;transition:background .2s,color .2s;-webkit-tap-highlight-color:transparent}
+  .btn-bell:hover{background:rgba(0,200,255,.12);color:var(--cyan)}
+  .bell-dot{position:absolute;top:6px;right:6px;width:7px;height:7px;border-radius:50%;background:var(--err);border:1.5px solid var(--bg);animation:dping 2s ease-in-out infinite}
+  @keyframes dping{0%,100%{transform:scale(1)}50%{transform:scale(1.3)}}
+  .user-trigger{display:flex;align-items:center;gap:8px;padding:4px 10px 4px 5px;border-radius:40px;background:rgba(0,200,255,.05);border:1px solid var(--bd);cursor:pointer;transition:background .2s,border-color .2s;-webkit-tap-highlight-color:transparent}
+  .user-trigger:hover,.user-trigger.open{background:rgba(0,200,255,.1);border-color:var(--bdh)}
+  .user-trigger.open .ut-arrow{transform:rotate(180deg)}
+  .ut-av{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--cyan),var(--blue));display:grid;place-items:center;font-size:11px;font-weight:700;font-family:var(--mono);color:#fff;flex-shrink:0}
+  .ut-info .ut-name{font-size:13px;font-weight:600;line-height:1.2}
+  .ut-info .ut-role{font-size:10px;color:var(--muted);font-family:var(--mono)}
+  .ut-arrow{font-size:10px;color:var(--muted);transition:transform var(--dur) var(--ease);flex-shrink:0}
+  .user-dd{position:absolute;top:calc(100% + 8px);right:0;width:230px;background:#050e1d;border:1px solid var(--bdh);border-radius:var(--r);box-shadow:0 20px 60px rgba(0,0,0,.65);opacity:0;visibility:hidden;transform:translateY(-8px) scale(.97);transition:all .25s var(--ease);z-index:999;overflow:hidden}
+  .user-dd.open{opacity:1;visibility:visible;transform:translateY(0) scale(1)}
+  .dd-hd{padding:14px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:10px;background:rgba(0,200,255,.03)}
+  .dd-av{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--cyan),var(--blue));display:grid;place-items:center;font-size:15px;font-weight:700;font-family:var(--mono);color:#fff}
+  .dd-nm{font-size:14px;font-weight:600}.dd-em{font-size:11px;color:var(--muted);font-family:var(--mono)}
+  .dd-rl{display:inline-block;margin-top:3px;font-size:9px;padding:2px 6px;border-radius:8px;background:rgba(0,200,255,.1);color:var(--cyan);border:1px solid rgba(0,200,255,.2);font-family:var(--mono)}
+  .dd-body{padding:5px}
+  .dd-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:var(--rs);font-size:13px;color:var(--dim);cursor:pointer;position:relative;overflow:hidden;transition:color .2s}
+  .dd-item::before{content:'';position:absolute;inset:0;background:rgba(0,200,255,.06);transform:scaleX(0);transform-origin:left;transition:transform .2s}
+  .dd-item:hover{color:var(--txt)}.dd-item:hover::before{transform:scaleX(1)}
+  .dd-item i{position:relative;z-index:1;font-size:14px;color:var(--muted);transition:color .2s,transform .2s;flex-shrink:0}
+  .dd-item:hover i{color:var(--cyan);transform:scale(1.2)}
+  .dd-item span{position:relative;z-index:1}
+  .dd-item.dng{color:#ff8fa3}.dd-item.dng i{color:var(--err)}.dd-item.dng:hover::before{background:rgba(255,77,109,.06)}
+  .dd-sep{height:1px;background:var(--bd);margin:4px 6px}
+
+  /* ══════════════════════ PAGE BODY ══════════════════════ */
+  .page-body{flex:1;padding:22px 24px 0;overflow-x:hidden;max-width:100%;min-width:0}
+
+  /* ══ Page Header ══ */
+  @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+  .pg-hd{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:20px;flex-wrap:wrap}
+  .pg-hd-left{display:flex;align-items:center;gap:14px}
+  .pg-ico{width:46px;height:46px;border-radius:12px;flex-shrink:0;background:linear-gradient(135deg,rgba(0,200,255,.15),rgba(0,114,198,.2));border:1px solid rgba(0,200,255,.2);display:grid;place-items:center;font-size:22px;color:var(--cyan);animation:float 3s ease-in-out infinite}
+  .pg-title{font-size:20px;font-weight:800;line-height:1.2}
+  .pg-sub{font-size:12px;color:var(--muted);font-family:var(--mono);margin-top:2px}
+  .pg-actions{display:flex;align-items:center;gap:8px}
+  .bc{display:flex;align-items:center;gap:5px;font-family:var(--mono);font-size:11.5px;color:var(--muted)}
+  .bc a{color:var(--muted);transition:color .2s}.bc a:hover{color:var(--cyan)}
+  .bc .sep{opacity:.4;font-size:10px}.bc .here{color:var(--cyan)}
+
+  /* ══ Stat Cards ══ */
+  .stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+  .sc{background:var(--card);border:1px solid var(--bd);border-radius:var(--r);padding:14px 16px;display:flex;align-items:center;gap:12px;transition:border-color .25s,transform .25s;position:relative;overflow:hidden;cursor:default}
+  .sc::after{content:'';position:absolute;top:0;right:0;width:3px;height:100%;border-radius:0 var(--r) var(--r) 0}
+  .sc.c::after{background:var(--cyan)}.sc.g::after{background:var(--ok)}.sc.w::after{background:var(--warn)}.sc.r::after{background:var(--err)}
+  .sc:hover{border-color:var(--bdh);transform:translateY(-2px)}
+  .sc-ico{width:40px;height:40px;border-radius:11px;display:grid;place-items:center;font-size:18px;flex-shrink:0}
+  .sc-ico.c{background:rgba(0,200,255,.1);color:var(--cyan)}
+  .sc-ico.g{background:rgba(0,229,160,.1);color:var(--ok)}
+  .sc-ico.w{background:rgba(245,158,11,.1);color:var(--warn)}
+  .sc-ico.r{background:rgba(255,77,109,.1);color:var(--err)}
+  .sc-val{font-size:22px;font-weight:800;line-height:1;font-family:var(--mono)}
+  .sc-lbl{font-size:11px;color:var(--muted);font-family:var(--mono);margin-top:3px}
+  .sc-tr{font-size:10.5px;font-family:var(--mono);margin-top:3px}
+  .sc-tr.up{color:var(--ok)}.sc-tr.w{color:var(--warn)}.sc-tr.r{color:var(--err)}
+
+  /* ══ Toolbar ══ */
+  .tbar{background:var(--card);border:1px solid var(--bd);border-radius:var(--r);padding:12px 16px;margin-bottom:14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .tbar-search{position:relative;flex:1;min-width:160px;max-width:300px}
+  .tbar-search input{width:100%;height:38px;border-radius:var(--rs);background:rgba(0,200,255,.05);border:1px solid var(--bd);padding:0 12px 0 36px;color:var(--txt);font-family:var(--font);font-size:13px;outline:none;transition:border-color .25s,background .25s}
+  .tbar-search input:focus{border-color:rgba(0,200,255,.3);background:rgba(0,200,255,.08)}
+  .tbar-search input::placeholder{color:var(--muted)}
+  .tbar-search i{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:14px}
+  .nsel{height:38px;border-radius:var(--rs);background:rgba(0,200,255,.05);border:1px solid var(--bd);padding:0 28px 0 11px;color:var(--txt);font-family:var(--font);font-size:13px;outline:none;cursor:pointer;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='%237a90a8' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 9px center;transition:border-color .25s}
+  .nsel:focus{border-color:rgba(0,200,255,.3)}
+  .nsel option{background:#071528;color:var(--txt)}
+  .tbar-right{margin-left:auto}
+
+  /* ══ Buttons ══ */
+  .btn-add{height:38px;display:inline-flex;align-items:center;gap:7px;padding:0 18px;border-radius:var(--rs);background:linear-gradient(135deg,var(--blue),var(--cyan));border:none;color:#fff;font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;position:relative;overflow:hidden;transition:all .25s;white-space:nowrap;-webkit-tap-highlight-color:transparent}
+  .btn-add::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,var(--cyan),var(--blue));opacity:0;transition:opacity .25s}
+  .btn-add:hover{transform:translateY(-1px);box-shadow:0 5px 18px rgba(0,200,255,.3)}
+  .btn-add:hover::before{opacity:1}
+  .btn-add span{position:relative;z-index:1;display:flex;align-items:center;gap:7px}
+
+  /* ══ Table Card ══ */
+  .tbl-card{background:var(--card);border:1px solid var(--bd);border-radius:var(--r);overflow:hidden;margin-bottom:24px}
+  /* Table responsive wrapper - selalu siap scroll horizontal */
+  .tbl-card .table-responsive{-webkit-overflow-scrolling:touch}
+  .tbl-card .table-responsive::-webkit-scrollbar{height:5px}
+  .tbl-card .table-responsive::-webkit-scrollbar-thumb{background:rgba(0,200,255,.2);border-radius:3px}
+  .dtbl{width:100%;border-collapse:collapse;min-width:960px;margin:0}
+  .dtbl thead tr{background:rgba(0,200,255,.03);border-bottom:1px solid rgba(0,200,255,.12)}
+  .dtbl th{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:1.2px;color:var(--muted);padding:11px 14px;white-space:nowrap;font-weight:600;border:none}
+  .dtbl td{padding:11px 14px;border-bottom:1px solid var(--bd);font-size:13px;vertical-align:middle;border-left:none;border-right:none;border-top:none}
+  .dtbl tbody tr:last-child td{border-bottom:none}
+  .dtbl tbody tr{transition:background .15s}
+  .dtbl tbody tr:hover{background:rgba(0,200,255,.03)}
+  .td-no{font-family:var(--mono);font-size:11px;color:var(--muted);text-align:center;width:42px}
+
+  /* Member cell */
+  .td-member{display:flex;align-items:center;gap:10px;min-width:0}
+  .mem-av{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;font-size:13px;font-weight:700;font-family:var(--mono);color:#fff;flex-shrink:0;box-shadow:0 0 10px rgba(0,0,0,.3)}
+  .mem-info{min-width:0}
+  .mem-nm{font-size:13.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px}
+  .mem-em{font-size:11px;color:var(--muted);font-family:var(--mono);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px}
+  .mem-em i{font-size:9px}
+
+  /* Role badges */
+  .role-badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-family:var(--mono);font-size:10.5px;font-weight:700;white-space:nowrap}
+  .rb-admin{background:rgba(255,77,109,.08);color:var(--err);border:1px solid rgba(255,77,109,.2)}
+  .rb-dev{background:rgba(0,200,255,.08);color:var(--cyan);border:1px solid rgba(0,200,255,.2)}
+  .rb-des{background:rgba(168,85,247,.1);color:#c084fc;border:1px solid rgba(168,85,247,.2)}
+  .rb-mgr{background:rgba(245,158,11,.08);color:var(--warn);border:1px solid rgba(245,158,11,.2)}
+  .rb-qa{background:rgba(0,229,160,.08);color:var(--ok);border:1px solid rgba(0,229,160,.2)}
+
+  /* Contact */
+  .td-contact{font-family:var(--mono);font-size:11.5px;color:var(--dim);white-space:nowrap;display:flex;flex-direction:column;gap:3px}
+  .td-contact i{font-size:10px;opacity:.7;margin-right:3px}
+
+  /* Skills */
+  .td-skills{display:flex;gap:4px;flex-wrap:wrap;max-width:160px}
+  .skill-tag{display:inline-block;padding:2px 7px;border-radius:4px;font-family:var(--mono);font-size:10px;background:rgba(0,200,255,.06);border:1px solid rgba(0,200,255,.12);color:var(--dim);white-space:nowrap}
+
+  /* Project */
+  .td-proj{display:flex;flex-direction:column;gap:3px}
+  .proj-chip{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:5px;font-size:11.5px;background:rgba(0,200,255,.04);border:1px solid var(--bd);color:var(--dim);white-space:nowrap;max-width:160px;overflow:hidden;text-overflow:ellipsis}
+  .proj2{font-family:var(--mono);font-size:10.5px;color:var(--muted)}
+
+  /* Task progress */
+  .task-wrap{min-width:90px}
+  .task-lbl{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10.5px;color:var(--dim);margin-bottom:4px}
+  .task-bar{height:5px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden}
+  .task-fill{height:100%;border-radius:3px;transition:width .4s ease}
+
+  /* Status */
+  .rbadge{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:20px;font-family:var(--mono);font-size:10.5px;font-weight:600;white-space:nowrap}
+  .rbadge::before{content:'';width:6px;height:6px;border-radius:50%;flex-shrink:0}
+  .rb-aktif{background:rgba(0,229,160,.08);color:var(--ok);border:1px solid rgba(0,229,160,.2)}
+  .rb-aktif::before{background:var(--ok);box-shadow:0 0 5px var(--ok)}
+  .rb-cuti{background:rgba(245,158,11,.08);color:var(--warn);border:1px solid rgba(245,158,11,.2)}
+  .rb-cuti::before{background:var(--warn);box-shadow:0 0 5px var(--warn);animation:blink 1.4s ease-in-out infinite}
+  .rb-nonaktif{background:rgba(100,116,139,.1);color:#94a3b8;border:1px solid rgba(100,116,139,.2)}
+  .rb-nonaktif::before{background:#94a3b8}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
+
+  /* Dates */
+  .td-dt{font-family:var(--mono);font-size:12px;color:var(--dim);white-space:nowrap}
+
+  /* Action buttons */
+  .act-row{display:flex;gap:4px;justify-content:center;flex-wrap:nowrap}
+  .ibtn{width:30px;height:30px;border-radius:7px;border:none;display:grid;place-items:center;font-size:13px;cursor:pointer;transition:all .18s;flex-shrink:0}
+  .ib-v{background:rgba(0,229,160,.08);border:1px solid rgba(0,229,160,.15);color:var(--ok)}.ib-v:hover{background:rgba(0,229,160,.18);transform:translateY(-2px)}
+  .ib-e{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.15);color:var(--warn)}.ib-e:hover{background:rgba(245,158,11,.18);transform:translateY(-2px)}
+  .ib-x{background:rgba(255,77,109,.08);border:1px solid rgba(255,77,109,.15);color:var(--err)}.ib-x:hover{background:rgba(255,77,109,.18);transform:translateY(-2px)}
+
+  /* Pagination */
+  .tbl-foot{display:flex;align-items:center;justify-content:space-between;padding:11px 16px;border-top:1px solid var(--bd);flex-wrap:wrap;gap:10px}
+  .tbl-info{font-family:var(--mono);font-size:11.5px;color:var(--muted)}
+  .tbl-info b{color:var(--cyan);font-weight:600}
+  .pag{display:flex;gap:4px;align-items:center}
+  .pb{width:32px;height:32px;border-radius:7px;border:1px solid var(--bd);background:rgba(0,200,255,.04);color:var(--dim);font-family:var(--mono);font-size:12px;cursor:pointer;display:grid;place-items:center;transition:all .18s;-webkit-tap-highlight-color:transparent}
+  .pb:hover:not([disabled]):not(.active){background:rgba(0,200,255,.1);color:var(--cyan);border-color:var(--bdh)}
+  .pb.active{background:linear-gradient(135deg,var(--blue),var(--cyan));color:#fff;border-color:transparent}
+  .pb[disabled]{opacity:.3;cursor:not-allowed}
+
+  /* ══ Footer ══ */
+  .page-footer{margin-top:32px;padding:16px 24px;border-top:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;background:rgba(5,14,29,.5)}
+  .ft-copy{font-family:var(--mono);font-size:11px;color:var(--muted)}
+  .ft-copy span{color:var(--cyan);opacity:.8}
+  .ft-status{display:flex;align-items:center;gap:5px;font-size:10.5px;color:var(--ok)}
+  .ft-dot{width:6px;height:6px;border-radius:50%;background:var(--ok);box-shadow:0 0 6px var(--ok);animation:dping 2s ease-in-out infinite}
+  .ft-links{display:flex;gap:14px;font-family:var(--mono);font-size:11px}
+  .ft-links a{color:var(--muted);transition:color .2s}.ft-links a:hover{color:var(--cyan)}
+
+  /* ══ FAB ══ */
+  .fab{position:fixed;bottom:28px;right:24px;width:52px;height:52px;z-index:250;border:none;background:none;padding:0;cursor:pointer;opacity:0;visibility:hidden;transform:translateY(20px) scale(.85);transition:opacity .4s var(--ease),visibility .4s,transform .45s cubic-bezier(.34,1.56,.64,1);-webkit-tap-highlight-color:transparent}
+  .fab.visible{opacity:1;visibility:visible;transform:translateY(0) scale(1)}
+  .fab-ring{position:absolute;inset:0;border-radius:50%;background:conic-gradient(var(--cyan) 0deg,var(--blue) 90deg,rgba(0,100,160,.2) 200deg,rgba(0,100,160,.2) 360deg);animation:fspin 2.5s linear infinite}
+  @keyframes fspin{to{transform:rotate(360deg)}}
+  .fab-inner{position:absolute;inset:3px;border-radius:50%;background:linear-gradient(135deg,#071528,#0d1f3c);display:grid;place-items:center;font-size:19px;color:var(--cyan);transition:all .3s}
+  .fab:hover .fab-inner{background:linear-gradient(135deg,var(--blue),var(--cyan));color:#fff;box-shadow:0 0 24px rgba(0,200,255,.5)}
+  .fab-orbit{position:absolute;inset:-4px;border-radius:50%;animation:forbit 3s linear infinite}
+  .fab-orbit::after{content:'';position:absolute;top:0;left:50%;width:5px;height:5px;border-radius:50%;background:var(--cyan);box-shadow:0 0 7px var(--cyan);transform:translateX(-50%);opacity:.8}
+  @keyframes forbit{to{transform:rotate(360deg)}}
+
+  /* ══ Modal Shared ══ */
+  @keyframes mshim{0%{left:-100%}100%{left:160%}}
+  .m-dark .modal-content{background:#050e1d;border-radius:var(--r);color:var(--txt);position:relative;overflow:hidden;box-shadow:0 32px 80px rgba(0,0,0,.7);display:flex;flex-direction:column;max-height:calc(100dvh - 60px)}
+  .m-dark .modal-content::before{content:'';position:absolute;top:0;left:-100%;width:60%;height:2px;pointer-events:none;z-index:1;animation:mshim 2.2s .2s ease-in-out forwards}
+  .m-dark.m-cyan .modal-content{border:1px solid rgba(0,200,255,.25)}
+  .m-dark.m-cyan .modal-content::before{background:linear-gradient(90deg,transparent,rgba(0,200,255,.55),transparent)}
+  .m-dark.m-red .modal-content{border:1px solid rgba(255,77,109,.25)}
+  .m-dark.m-red .modal-content::before{background:linear-gradient(90deg,transparent,rgba(255,77,109,.55),transparent)}
+  .m-dark.m-green .modal-content{border:1px solid rgba(0,229,160,.25)}
+  .m-dark.m-green .modal-content::before{background:linear-gradient(90deg,transparent,rgba(0,229,160,.55),transparent)}
+  .m-hd{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;flex-shrink:0}
+  .m-dark.m-cyan .m-hd{border-bottom:1px solid rgba(0,200,255,.12)}
+  .m-dark.m-red .m-hd{border-bottom:1px solid rgba(255,77,109,.12)}
+  .m-dark.m-green .m-hd{border-bottom:1px solid rgba(0,229,160,.12)}
+  .m-hd-title{display:flex;align-items:center;gap:9px;margin:0;font-size:15px;font-weight:700}
+  .m-dark.m-cyan .m-hd-title i{color:var(--cyan)}
+  .m-dark.m-red .m-hd-title i{color:var(--err)}
+  .m-dark.m-green .m-hd-title i{color:var(--ok)}
+  .m-close{width:28px;height:28px;border-radius:6px;border:none;background:rgba(255,255,255,.05);display:grid;place-items:center;cursor:pointer;color:var(--dim);font-size:15px;transition:background .2s,color .2s;flex-shrink:0}
+  .m-close:hover{background:rgba(255,77,109,.12);color:var(--err)}
+  .m-bd{padding:20px;overflow-y:auto;flex:1 1 auto;min-height:0}
+  .m-ft{padding:14px 20px;display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;flex-shrink:0}
+  .m-dark.m-cyan .m-ft{border-top:1px solid rgba(0,200,255,.1)}
+  .m-dark.m-red .m-ft{border-top:1px solid rgba(255,77,109,.1)}
+  .m-dark.m-green .m-ft{border-top:1px solid rgba(0,229,160,.1)}
+  .warn-box{display:flex;gap:12px;padding:13px;background:rgba(255,77,109,.05);border:1px solid rgba(255,77,109,.15);border-left:3px solid var(--err);border-radius:var(--rs);margin-bottom:12px}
+  .warn-box>i{font-size:19px;color:var(--err);flex-shrink:0}
+  .warn-box p{font-size:13px;color:var(--dim);line-height:1.6;margin:0}
+  .warn-box p strong{color:var(--txt)}
+  .modal-drain{height:3px;background:rgba(255,77,109,.08);overflow:hidden}
+  .drain-fill{height:100%;width:100%;background:linear-gradient(90deg,var(--err),rgba(255,77,109,.4))}
+  .drain-fill.go{animation:drain 10s linear forwards}
+  @keyframes drain{to{width:0%}}
+  /* Buttons modal */
+  .btn-mcancel{background:rgba(255,255,255,.05);border:1px solid var(--bd);color:var(--dim);font-family:var(--font);font-size:13px;padding:8px 17px;border-radius:var(--rs);cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:6px}
+  .btn-mcancel:hover{background:rgba(255,255,255,.08);color:var(--txt);border-color:var(--bdh)}
+  .btn-msave{background:linear-gradient(135deg,var(--blue),var(--cyan));border:none;color:#fff;font-family:var(--font);font-size:13px;font-weight:600;padding:8px 20px;border-radius:var(--rs);cursor:pointer;display:flex;align-items:center;gap:6px;position:relative;overflow:hidden;transition:all .25s}
+  .btn-msave::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,var(--cyan),var(--blue));opacity:0;transition:opacity .25s}
+  .btn-msave:hover{transform:translateY(-1px);box-shadow:0 5px 16px rgba(0,200,255,.3)}
+  .btn-msave:hover::before{opacity:1}
+  .btn-msave span{position:relative;z-index:1;display:flex;align-items:center;gap:6px}
+  .btn-mdel{background:linear-gradient(135deg,rgba(180,30,50,.9),rgba(255,77,109,.85));border:1px solid rgba(255,77,109,.3);color:#fff;font-family:var(--font);font-size:13px;font-weight:600;padding:8px 20px;border-radius:var(--rs);cursor:pointer;display:flex;align-items:center;gap:6px;position:relative;overflow:hidden;transition:all .25s}
+  .btn-mdel::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,77,109,.9),rgba(200,30,60,.9));opacity:0;transition:opacity .25s}
+  .btn-mdel:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(255,77,109,.4)}
+  .btn-mdel:hover::before{opacity:1}
+  .btn-mdel span{position:relative;z-index:1;display:flex;align-items:center;gap:6px}
+  /* Form */
+  .fm-lbl{font-size:11px;font-weight:700;color:var(--dim);font-family:var(--mono);text-transform:uppercase;letter-spacing:.8px;display:block;margin-bottom:6px}
+  .fm-lbl .req{color:var(--err);margin-left:2px}
+  .fmi{width:100%;height:40px;border-radius:var(--rs);background:rgba(0,200,255,.04);border:1px solid var(--bd);padding:0 12px;color:var(--txt);font-family:var(--font);font-size:13px;outline:none;transition:border-color .25s,background .25s}
+  .fmi:focus{border-color:rgba(0,200,255,.35);background:rgba(0,200,255,.07)}
+  .fmi::placeholder{color:var(--muted)}
+  .fmsel{width:100%;height:40px;border-radius:var(--rs);background:rgba(0,200,255,.04);border:1px solid var(--bd);padding:0 28px 0 11px;color:var(--txt);font-family:var(--font);font-size:13px;outline:none;cursor:pointer;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='%237a90a8' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 9px center;transition:border-color .25s}
+  .fmsel:focus{border-color:rgba(0,200,255,.35)}
+  .fmsel option{background:#071528}
+  .fmta{width:100%;height:80px;border-radius:var(--rs);background:rgba(0,200,255,.04);border:1px solid var(--bd);padding:10px 12px;color:var(--txt);font-family:var(--font);font-size:13px;outline:none;resize:none;line-height:1.55;transition:border-color .25s,background .25s}
+  .fmta:focus{border-color:rgba(0,200,255,.35);background:rgba(0,200,255,.07)}
+  .fmta::placeholder{color:var(--muted)}
+  /* Detail modal */
+  .det-av{width:70px;height:70px;border-radius:50%;display:grid;place-items:center;font-size:26px;font-weight:800;font-family:var(--mono);color:#fff;flex-shrink:0;box-shadow:0 0 24px rgba(0,0,0,.4)}
+  .det-hd{display:flex;align-items:center;gap:16px;padding:18px 20px;background:rgba(0,200,255,.025);border-bottom:1px solid rgba(0,200,255,.1)}
+  .det-nm{font-size:18px;font-weight:800}
+  .det-role{margin-top:4px}
+  .det-email{font-family:var(--mono);font-size:12px;color:var(--muted);margin-top:4px}
+  .det-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:0}
+  .dg-item{background:rgba(0,200,255,.025);border:1px solid var(--bd);border-radius:var(--rs);padding:12px 14px}
+  .dg-lbl{font-family:var(--mono);font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.9px;margin-bottom:4px}
+  .dg-val{font-size:13px;font-weight:600;color:var(--txt)}
+  .dg-val.c{color:var(--cyan)}.dg-val.g{color:var(--ok)}.dg-val.w{color:var(--warn)}
+
+  /* ════════════════════════════════════════════════════════
+     RESPONSIVE BREAKPOINTS — selaras dengan laporan.html
+  ════════════════════════════════════════════════════════ */
+
+  /* ≤ 1199 — desktop medium: stat cards 2 kolom, padding dikurangi */
+  @media(max-width:1199.98px){
+    .page-body{padding:20px 20px 0}
+    .stat-row{grid-template-columns:repeat(2,1fr);gap:10px}
+    .mem-nm,.mem-em{max-width:130px}
+    .proj-chip{max-width:130px}
+    .td-skills{max-width:130px}
+  }
+
+  /* ≤ 991 — TABLET & MOBILE: sidebar overlay, konten full width */
+  @media(max-width:991.98px){
+    .sidebar{transform:translateX(-100%);transition:transform .35s var(--ease);width:var(--sw)!important;z-index:400}
+    .sidebar.sb-open{transform:translateX(0);box-shadow:8px 0 48px rgba(0,0,0,.75)}
+    .sb-overlay.sb-open{display:block}
+    .main-wrap{margin-left:0!important;width:100%;max-width:100vw}
+    .tb-search{display:none}
+    .ut-info{display:none}
+    .topbar{padding:0 14px}
+    .page-body{padding:16px 16px 0}
+    /* Stat: 4 kolom kembali karena sidebar sudah overlay */
+    .stat-row{grid-template-columns:repeat(4,1fr);gap:10px}
+    /* Toolbar */
+    .tbar{flex-wrap:wrap;gap:8px;padding:11px 13px}
+    .tbar-search{max-width:100%;min-width:0;flex:1 1 100%}
+    .nsel{flex:1;min-width:0}
+    .tbar-right{margin-left:0;width:100%;justify-content:space-between}
+    .btn-add{flex:1;justify-content:center}
+    /* Footer */
+    .page-footer{padding:14px 20px}
+  }
+
+  /* ≤ 767 — MOBILE: 2 kolom stat, header stack */
+  @media(max-width:767.98px){
+    .page-body{padding:12px 12px 0}
+    .pg-hd{flex-direction:column;align-items:flex-start;gap:10px;margin-bottom:16px}
+    .pg-actions{width:100%}
+    .pg-actions .btn-add{width:100%;justify-content:center;height:40px}
+    .stat-row{grid-template-columns:repeat(2,1fr);gap:8px}
+    .sc{padding:12px 13px;gap:10px}
+    .sc-ico{width:36px;height:36px;font-size:16px;border-radius:9px}
+    .sc-val{font-size:20px}
+    .sc-tr{display:none}
+    .tbar{padding:10px 12px}
+    .tbl-foot{flex-direction:column;align-items:center;gap:8px}
+    .page-footer{flex-direction:column;align-items:center;text-align:center;gap:7px;padding:14px 16px}
+    .ft-links{justify-content:center}
+    .det-grid{grid-template-columns:1fr}
+  }
+
+  /* ≤ 575 — SMALL MOBILE */
+  @media(max-width:575.98px){
+    .page-body{padding:10px 10px 0}
+    .topbar{padding:0 10px;gap:8px}
+    .pg-ico{width:40px;height:40px;font-size:19px}
+    .pg-title{font-size:17px}
+    .pg-sub{font-size:11px}
+    /* Toolbar: select 2 kolom, tombol penuh */
+    .tbar{gap:7px;padding:10px}
+    .nsel{flex:1 1 calc(50% - 4px);min-width:0;height:36px;font-size:12px}
+    .tbar-right{width:100%;margin-left:0;justify-content:stretch}
+    .tbar-right .btn-add{width:100%;justify-content:center;height:36px;flex:1 1 auto}
+    .stat-row{grid-template-columns:1fr 1fr;gap:7px}
+    .sc-val{font-size:18px}
+    .sc-lbl{font-size:10px}
+    .tbl-foot{flex-direction:column;align-items:center;gap:8px;padding:10px 12px}
+    .pb{width:30px;height:30px;font-size:11px}
+    .fab{bottom:12px;right:10px;width:46px;height:46px}
+    .fab-inner{font-size:17px}
+    .page-footer{padding:14px 14px}
+    .ft-links{gap:10px;flex-wrap:wrap;justify-content:center}
+    .m-bd{padding:14px}.m-ft{padding:12px 14px}.m-hd{padding:14px}
+    .det-grid{grid-template-columns:1fr}
+    .user-trigger{padding:5px 8px 5px 6px}
+  }
+
+  /* ≤ 380 — ULTRA SMALL MOBILE */
+  @media(max-width:380px){
+    .topbar{padding:0 8px;gap:6px}
+    .page-body{padding:8px 8px 0}
+    .pb{width:28px;height:28px;font-size:11px}
+  }
+</style>
+</head>
+<body>
+<canvas id="bgc"></canvas>
+<aside class="sidebar" id="sidebar">
+  <div class="sb-brand">
+    <div class="sb-logo"><i class="bi bi-diagram-3-fill"></i></div>
+    <div class="sb-title">
+      <span class="name">PMS</span>
+      <span class="sub">Project Management</span>
+    </div>
+  </div>
+
+  <nav class="sb-nav">
+    <div class="nav-section">Master</div>
+    <a class="nav-link" href="dashboard.html" data-tip="Dashboard">
+      <span class="nav-icon"><i class="bi bi-grid-3x3-gap-fill"></i></span>
+      <span class="nav-text">Dashboard</span>
+    </a>
+    <a class="nav-link" href="project.html" data-tip="Project">
+      <span class="nav-icon"><i class="bi bi-kanban-fill"></i></span>
+      <span class="nav-text">Project</span>
+      <span class="nav-badge">12</span>
+    </a>
+    <a class="nav-link" href="dokumen.html" data-tip="Dokumen">
+      <span class="nav-icon"><i class="bi bi-folder2-open"></i></span>
+      <span class="nav-text">Dokumen</span>
+      <span class="nav-badge">48</span>
+    </a>
+    <a class="nav-link" href="#" data-tip="Catatan">
+      <span class="nav-icon"><i class="bi bi-journal-text"></i></span>
+      <span class="nav-text">Catatan</span>
+    </a>
+    <a class="nav-link" href="#" data-tip="Laporan PDF">
+      <span class="nav-icon"><i class="bi bi-file-earmark-pdf-fill"></i></span>
+      <span class="nav-text">Laporan PDF</span>
+    </a>
+    <div class="nav-divider"></div>
+    <div class="nav-section">Management</div>
+    <a class="nav-link active" href="tim.html" data-tip="Manajemen Tim">
+      
+      <span class="nav-icon"><i class="bi bi-people-fill"></i></span>
+      <span class="nav-text">Manajemen Tim</span>
+    </a>
+    <a class="nav-link" href="#" data-tip="Kategori Dokumen">
+      <span class="nav-icon"><i class="bi bi-tags-fill"></i></span>
+      <span class="nav-text">Kategori Dokumen</span>
+    </a>
+    <div class="nav-divider"></div>
+    <div class="nav-section">Setting</div>
+    <a class="nav-link" href="#" data-tip="Manajemen User">
+      <span class="nav-icon"><i class="bi bi-person-badge-fill"></i></span>
+      <span class="nav-text">Manajemen User</span>
+    </a>
+    <a class="nav-link" href="#" data-tip="Role & Permission">
+      <span class="nav-icon"><i class="bi bi-shield-fill-check"></i></span>
+      <span class="nav-text">Role &amp; Permission</span>
+    </a>
+    <a class="nav-link" href="#" data-tip="Notifikasi">
+      <span class="nav-icon"><i class="bi bi-bell-fill"></i></span>
+      <span class="nav-text">Notifikasi</span>
+      <span class="nav-badge" style="background:rgba(255,77,109,.15);color:var(--err);border-color:rgba(255,77,109,.25)">3</span>
+    </a>
+    <a class="nav-link" href="#" data-tip="Pengaturan">
+      <span class="nav-icon"><i class="bi bi-gear-fill"></i></span>
+      <span class="nav-text">Pengaturan</span>
+    </a>
+  </nav>
+
+  <div class="sb-footer">
+    <div class="sb-user">
+      <div class="sb-av">BS</div>
+      <div class="sb-user-info">
+        <div class="uname">Budi Santoso</div>
+        <div class="urole">Admin</div>
+      </div>
+      <i class="bi bi-chevron-right sb-chev"></i>
+    </div>
+  </div>
+</aside>
+<!-- Overlay for mobile sidebar -->
+<div class="sb-overlay" id="sbOverlay"></div>
+<div class="layout">
+  <div class="main-wrap" id="mainWrap">
+<header class="topbar">
+      <button class="btn-toggle" id="btnToggle" title="Toggle Sidebar">
+        <i class="bi bi-layout-sidebar-inset" id="toggleIcon"></i>
+      </button>
+
+      <div class="tb-crumb d-none d-md-flex">
+        <i class="bi bi-house-fill" style="color:var(--muted)"></i>
+        <span style="opacity:.4">/</span>
+        <a href="dashboard.html">Dashboard</a>
+        <span style="opacity:.4">/</span>
+        <span class="cur">Management Tim</span>
+      </div>
+
+      <div class="tb-search ms-2">
+        <i class="bi bi-search"></i>
+        <input type="text" placeholder="Cari anggota..."/>
+      </div>
+
+      <div class="tb-right">
+        <button class="btn-bell" title="Notifikasi">
+          <i class="bi bi-bell-fill"></i>
+          <span class="bell-dot"></span>
+        </button>
+
+        <div style="position:relative">
+          <div class="user-trigger" id="userTrigger">
+            <div class="ut-av">BS</div>
+            <div class="ut-info">
+              <div class="ut-name">Budi Santoso</div>
+              <div class="ut-role">Admin</div>
+            </div>
+            <i class="bi bi-chevron-down ut-arrow"></i>
+          </div>
+          <div class="user-dd" id="userDd">
+            <div class="dd-hd">
+              <div class="dd-av">BS</div>
+              <div>
+                <div class="dd-nm">Budi Santoso</div>
+                <div class="dd-em">budi@example.com</div>
+                <span class="dd-rl">ADMIN</span>
+              </div>
+            </div>
+            <div class="dd-body">
+              <div class="dd-item"><i class="bi bi-person-circle"></i><span>Profil Saya</span></div>
+              <div class="dd-item"><i class="bi bi-gear-wide-connected"></i><span>Pengaturan</span></div>
+              <div class="dd-sep"></div>
+              <div class="dd-item dng" data-bs-toggle="modal" data-bs-target="#logoutModal">
+                <i class="bi bi-box-arrow-right"></i><span>Logout</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+    <main class="page-body">
+
+      <!-- Page Header -->
+      <div class="pg-hd" data-aos="fade-down">
+        <div class="pg-hd-left">
+          <div class="pg-ico"><i class="bi bi-people-fill"></i></div>
+          <div>
+            <div class="pg-title">Management Tim</div>
+            <div class="pg-sub">10 anggota &bull; 5 role &bull; 4 project aktif</div>
+          </div>
+        </div>
+        <div class="pg-actions">
+          <div class="bc d-none d-xl-flex">
+            <a href="dashboard.html"><i class="bi bi-house-fill"></i>&nbsp;Home</a>
+            <span class="sep"><i class="bi bi-chevron-right"></i></span>
+            <span class="here">Management Tim</span>
+          </div>
+          <button class="btn-add" data-bs-toggle="modal" data-bs-target="#addModal">
+            <span><i class="bi bi-person-plus-fill"></i> Tambah Anggota</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Stat Cards -->
+      <div class="stat-row" data-aos="fade-up" data-aos-delay="40">
+        <div class="sc c">
+          <div class="sc-ico c"><i class="bi bi-people-fill"></i></div>
+          <div>
+            <div class="sc-val">10</div>
+            <div class="sc-lbl">Total Anggota</div>
+            <div class="sc-tr up"><i class="bi bi-arrow-up-short"></i>+2 bulan ini</div>
+          </div>
+        </div>
+        <div class="sc g">
+          <div class="sc-ico g"><i class="bi bi-person-check-fill"></i></div>
+          <div>
+            <div class="sc-val">8</div>
+            <div class="sc-lbl">Aktif</div>
+            <div class="sc-tr up"><i class="bi bi-arrow-up-short"></i>80% dari total</div>
+          </div>
+        </div>
+        <div class="sc w">
+          <div class="sc-ico w"><i class="bi bi-person-dash-fill"></i></div>
+          <div>
+            <div class="sc-val">1</div>
+            <div class="sc-lbl">Sedang Cuti</div>
+            <div class="sc-tr w"><i class="bi bi-dash"></i>kembali 15 Mar</div>
+          </div>
+        </div>
+        <div class="sc r">
+          <div class="sc-ico r"><i class="bi bi-person-x-fill"></i></div>
+          <div>
+            <div class="sc-val">1</div>
+            <div class="sc-lbl">Nonaktif</div>
+            <div class="sc-tr r"><i class="bi bi-arrow-down-short"></i>perlu tindakan</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Toolbar -->
+      <div class="tbar" data-aos="fade-up" data-aos-delay="60">
+        <div class="tbar-search">
+          <i class="bi bi-search"></i>
+          <input type="text" placeholder="Cari nama atau email anggota..."/>
+        </div>
+        <select class="nsel" style="min-width:130px">
+          <option value="">Semua Role</option>
+          <option>Admin</option>
+          <option>Manager</option>
+          <option>Developer</option>
+          <option>Designer</option>
+          <option>QA</option>
+        </select>
+        <select class="nsel" style="min-width:160px">
+          <option value="">Semua Project</option>
+          <option>PPID Kota Pekalongan</option>
+          <option>Sistem Absensi</option>
+          <option>E-Commerce Mobile</option>
+          <option>Manajemen Aset</option>
+        </select>
+        <select class="nsel" style="min-width:120px">
+          <option value="">Semua Status</option>
+          <option>Aktif</option>
+          <option>Cuti</option>
+          <option>Nonaktif</option>
+        </select>
+        <div class="tbar-right">
+          <button class="btn-add" data-bs-toggle="modal" data-bs-target="#addModal">
+            <span><i class="bi bi-person-plus-fill"></i><span class="d-none d-sm-inline"> Tambah</span></span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Table Card -->
+      <div class="tbl-card" data-aos="fade-up" data-aos-delay="80">
+        <div class="table-responsive">
+          <table class="dtbl">
+            <thead>
+              <tr>
+                <th style="text-align:center;width:42px">#</th>
+                <th style="min-width:200px">ANGGOTA</th>
+                <th>ROLE</th>
+                <th style="min-width:140px">KONTAK</th>
+                <th style="min-width:150px">SKILL</th>
+                <th style="min-width:160px">PROJECT</th>
+                <th style="min-width:110px">TASK</th>
+                <th>STATUS</th>
+                <th style="min-width:100px">TGL GABUNG</th>
+                <th style="min-width:110px">TERAKHIR AKTIF</th>
+                <th style="text-align:center;width:100px">AKSI</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="td-no">01</td>
+                <td>
+                  <div class="td-member">
+                    <div class="mem-av" style="background:linear-gradient(135deg,#0072c6,#00c8ff)">AW</div>
+                    <div class="mem-info">
+                      <div class="mem-nm">Andi Wijaya</div>
+                      <div class="mem-em"><i class="bi bi-envelope"></i> andi@pmssystem.id</div>
+                    </div>
+                  </div>
+                </td>
+                <td><span class="role-badge rb-dev">Developer</span></td>
+                <td>
+                  <div class="td-contact">
+                    <span><i class="bi bi-telephone"></i> 0812-3456-7890</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="td-skills">
+                    <span class="skill-tag">Laravel</span>
+                    <span class="skill-tag">Vue.js</span>
+                    <span class="skill-tag">MySQL</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="td-proj">
+                    <span class="proj-chip"><i class="bi bi-kanban" style="font-size:10px;opacity:.6"></i> PPID Kota Pekalongan</span>
+                    <span class="proj2">+2 lainnya</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="task-wrap">
+                    <div class="task-lbl"><span>6/8</span><span>75%</span></div>
+                    <div class="task-bar"><div class="task-fill" style="width:75%;background:#00c8ff"></div></div>
+                  </div>
+                </td>
+                <td><span class="rbadge rb-aktif">Aktif</span></td>
+                <td class="td-dt">12 Jan 2024</td>
+                <td class="td-dt" style="color:var(--muted)">2 jam lalu</td>
+                <td>
+                  <div class="act-row">
+                    <button class="ibtn ib-v" title="Lihat Detail" data-bs-toggle="modal" data-bs-target="#detailModal"
+                      data-nm="Andi Wijaya" data-role="Developer" data-email="andi@pmssystem.id"
+                      data-phone="0812-3456-7890" data-proj="PPID Kota Pekalongan" data-status="Aktif"
+                      data-tgl="12 Jan 2024" data-tasks="6/8"><i class="bi bi-eye"></i></button>
+                    <button class="ibtn ib-e" title="Edit" data-bs-toggle="modal" data-bs-target="#editModal"><i class="bi bi-pencil"></i></button>
+                    <button class="ibtn ib-x" title="Hapus" data-nm="Andi Wijaya" data-bs-toggle="modal" data-bs-target="#delModal"><i class="bi bi-trash3"></i></button>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td class="td-no">02</td>
+                <td>
+                  <div class="td-member">
+                    <div class="mem-av" style="background:linear-gradient(135deg,#1e3a5f,#3d6080)">BS</div>
+                    <div class="mem-info">
+                      <div class="mem-nm">Budi Santoso</div>
+                      <div class="mem-em"><i class="bi bi-envelope"></i> budi@pmssystem.id</div>
+                    </div>
+                  </div>
+                </td>
+                <td><span class="role-badge rb-admin">Admin</span></td>
+                <td>
+                  <div class="td-contact">
+                    <span><i class="bi bi-telephone"></i> 0813-5678-9012</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="td-skills">
+                    <span class="skill-tag">Laravel</span>
+                    <span class="skill-tag">Filament</span>
+                    <span class="skill-tag">Spatie</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="td-proj">
+                    <span class="proj-chip"><i class="bi bi-kanban" style="font-size:10px;opacity:.6"></i> Semua Project</span>
+                    
+                  </div>
+                </td>
+                <td>
+                  <div class="task-wrap">
+                    <div class="task-lbl"><span>15/15</span><span>100%</span></div>
+                    <div class="task-bar"><div class="task-fill" style="width:100%;background:#00e5a0"></div></div>
+                  </div>
+                </td>
+                <td><span class="rbadge rb-aktif">Aktif</span></td>
+                <td class="td-dt">03 Jan 2024</td>
+                <td class="td-dt" style="color:var(--muted)">10 mnt lalu</td>
+                <td>
+                  <div class="act-row">
+                    <button class="ibtn ib-v" title="Lihat Detail" data-bs-toggle="modal" data-bs-target="#detailModal"
+                      data-nm="Budi Santoso" data-role="Admin" data-email="budi@pmssystem.id"
+                      data-phone="0813-5678-9012" data-proj="Semua Project" data-status="Aktif"
+                      data-tgl="03 Jan 2024" data-tasks="15/15"><i class="bi bi-eye"></i></button>
+                    <button class="ibtn ib-e" title="Edit" data-bs-toggle="modal" data-bs-target="#editModal"><i class="bi bi-pencil"></i></button>
+                    <button class="ibtn ib-x" title="Hapus" data-nm="Budi Santoso" data-bs-toggle="modal" data-bs-target="#delModal"><i class="bi bi-trash3"></i></button>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td class="td-no">03</td>
+                <td>
+                  <div class="td-member">
+                    <div class="mem-av" style="background:linear-gradient(135deg,#6d28d9,#a78bfa)">SR</div>
+                    <div class="mem-info">
+                      <div class="mem-nm">Siti Rahayu</div>
+                      <div class="mem-em"><i class="bi bi-envelope"></i> siti@pmssystem.id</div>
+                    </div>
+                  </div>
+                </td>
+                <td><span class="role-badge rb-des">Designer</span></td>
+                <td>
+                  <div class="td-contact">
+                    <span><i class="bi bi-telephone"></i> 0821-9876-5432</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="td-skills">
+                    <span class="skill-tag">Figma</span>
+                    <span class="skill-tag">Flutter</span>
+                    <span class="skill-tag">CSS</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="td-proj">
+                    <span class="proj-chip"><i class="bi bi-kanban" style="font-size:10px;opacity:.6"></i> E-Commerce Mobile</span>
+                    <span class="proj2">+1 lainnya</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="task-wrap">
+                    <div class="task-lbl"><span>4/5</span><span>80%</span></div>
+                    <div class="task-bar"><div class="task-fill" style="width:80%;background:#00c8ff"></div></div>
+                  </div>
+                </td>
+                <td><span class="rbadge rb-aktif">Aktif</span></td>
+                <td class="td-dt">20 Jan 2024</td>
+                <td class="td-dt" style="color:var(--muted)">1 hari lalu</td>
+                <td>
+                  <div class="act-row">
+                    <button class="ibtn ib-v" title="Lihat Detail" data-bs-toggle="modal" data-bs-target="#detailModal"
+                      data-nm="Siti Rahayu" data-role="Designer" data-email="siti@pmssystem.id"
+                      data-phone="0821-9876-5432" data-proj="E-Commerce Mobile" data-status="Aktif"
+                      data-tgl="20 Jan 2024" data-tasks="4/5"><i class="bi bi-eye"></i></button>
+                    <button class="ibtn ib-e" title="Edit" data-bs-toggle="modal" data-bs-target="#editModal"><i class="bi bi-pencil"></i></button>
+                    <button class="ibtn ib-x" title="Hapus" data-nm="Siti Rahayu" data-bs-toggle="modal" data-bs-target="#delModal"><i class="bi bi-trash3"></i></button>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td class="td-no">04</td>
+                <td>
+                  <div class="td-member">
+                    <div class="mem-av" style="background:linear-gradient(135deg,#065f46,#00e5a0)">DK</div>
+                    <div class="mem-info">
+                      <div class="mem-nm">Deni Kurnia</div>
+                      <div class="mem-em"><i class="bi bi-envelope"></i> deni@pmssystem.id</div>
+                    </div>
+                  </div>
+                </td>
+                <td><span class="role-badge rb-dev">Developer</span></td>
+                <td>
+                  <div class="td-contact">
+                    <span><i class="bi bi-telephone"></i> 0856-1234-5678</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="td-skills">
+                    <span class="skill-tag">Node.js</span>
+                    <span class="skill-tag">React</span>
+                    <span class="skill-tag">PostgreSQL</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="td-proj">
+                    <span class="proj-chip"><i class="bi bi-kanban" style="font-size:10px;opacity:.6"></i> PPID Kota Pekalongan</span>
+                    <span class="proj2">+1 lainnya</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="task-wrap">
+                    <div class="task-lbl"><span>3/6</span><span>50%</span></div>
+                    <div class="task-bar"><div class="task-fill" style="width:50%;background:#f59e0b"></div></div>
+                  </div>
+                </td>
+                <td><span class="rbadge rb-aktif">Aktif</span></td>
+                <td class="td-dt">15 Feb 2024</td>
+                <td class="td-dt" style="color:var(--muted)">3 jam lalu</td>
+                <td>
+                  <div class="act-row">
+                    <button class="ibtn ib-v" title="Lihat Detail" data-bs-toggle="modal" data-bs-target="#detailModal"
+                      data-nm="Deni Kurnia" data-role="Developer" data-email="deni@pmssystem.id"
+                      data-phone="0856-1234-5678" data-proj="PPID Kota Pekalongan" data-status="Aktif"
+                      data-tgl="15 Feb 2024" data-tasks="3/6"><i class="bi bi-eye"></i></button>
+                    <button class="ibtn ib-e" title="Edit" data-bs-toggle="modal" data-bs-target="#editModal"><i class="bi bi-pencil"></i></button>
+                    <button class="ibtn ib-x" title="Hapus" data-nm="Deni Kurnia" data-bs-toggle="modal" data-bs-target="#delModal"><i class="bi bi-trash3"></i></button>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td class="td-no">05</td>
+                <td>
+                  <div class="td-member">
+                    <div class="mem-av" style="background:linear-gradient(135deg,#92400e,#f59e0b)">RM</div>
+                    <div class="mem-info">
+                      <div class="mem-nm">Rina Marlina</div>
+                      <div class="mem-em"><i class="bi bi-envelope"></i> rina@pmssystem.id</div>
+                    </div>
+                  </div>
+                </td>
+                <td><span class="role-badge rb-mgr">Manager</span></td>
+                <td>
+                  <div class="td-contact">
+                    <span><i class="bi bi-telephone"></i> 0878-2345-6789</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="td-skills">
+                    <span class="skill-tag">Scrum</span>
+                    <span class="skill-tag">Jira</span>
+                    <span class="skill-tag">Notion</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="td-proj">
+                    <span class="proj-chip"><i class="bi bi-kanban" style="font-size:10px;opacity:.6"></i> Manajemen Aset</span>
+                    <span class="proj2">+2 lainnya</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="task-wrap">
+                    <div class="task-lbl"><span>10/12</span><span>83%</span></div>
+                    <div class="task-bar"><div class="task-fill" style="width:83%;background:#00c8ff"></div></div>
+                  </div>
+                </td>
+                <td><span class="rbadge rb-aktif">Aktif</span></td>
+                <td class="td-dt">08 Jan 2024</td>
+                <td class="td-dt" style="color:var(--muted)">5 jam lalu</td>
+                <td>
+                  <div class="act-row">
+                    <button class="ibtn ib-v" title="Lihat Detail" data-bs-toggle="modal" data-bs-target="#detailModal"
+                      data-nm="Rina Marlina" data-role="Manager" data-email="rina@pmssystem.id"
+                      data-phone="0878-2345-6789" data-proj="Manajemen Aset" data-status="Aktif"
+                      data-tgl="08 Jan 2024" data-tasks="10/12"><i class="bi bi-eye"></i></button>
+                    <button class="ibtn ib-e" title="Edit" data-bs-toggle="modal" data-bs-target="#editModal"><i class="bi bi-pencil"></i></button>
+                    <button class="ibtn ib-x" title="Hapus" data-nm="Rina Marlina" data-bs-toggle="modal" data-bs-target="#delModal"><i class="bi bi-trash3"></i></button>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td class="td-no">06</td>
+                <td>
+                  <div class="td-member">
+                    <div class="mem-av" style="background:linear-gradient(135deg,#164e63,#06b6d4)">FH</div>
+                    <div class="mem-info">
+                      <div class="mem-nm">Fajar Hidayat</div>
+                      <div class="mem-em"><i class="bi bi-envelope"></i> fajar@pmssystem.id</div>
+                    </div>
+                  </div>
+                </td>
+                <td><span class="role-badge rb-dev">Developer</span></td>
+                <td>
+                  <div class="td-contact">
+                    <span><i class="bi bi-telephone"></i> 0895-3456-7890</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="td-skills">
+                    <span class="skill-tag">Python</span>
+                    <span class="skill-tag">Django</span>
+                    <span class="skill-tag">Redis</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="td-proj">
+                    <span class="proj-chip"><i class="bi bi-kanban" style="font-size:10px;opacity:.6"></i> Sistem Absensi</span>
+                    
+                  </div>
+                </td>
+                <td>
+                  <div class="task-wrap">
+                    <div class="task-lbl"><span>2/4</span><span>50%</span></div>
+                    <div class="task-bar"><div class="task-fill" style="width:50%;background:#f59e0b"></div></div>
+                  </div>
+                </td>
+                <td><span class="rbadge rb-cuti">Cuti</span></td>
+                <td class="td-dt">22 Mar 2024</td>
+                <td class="td-dt" style="color:var(--muted)">3 hari lalu</td>
+                <td>
+                  <div class="act-row">
+                    <button class="ibtn ib-v" title="Lihat Detail" data-bs-toggle="modal" data-bs-target="#detailModal"
+                      data-nm="Fajar Hidayat" data-role="Developer" data-email="fajar@pmssystem.id"
+                      data-phone="0895-3456-7890" data-proj="Sistem Absensi" data-status="Cuti"
+                      data-tgl="22 Mar 2024" data-tasks="2/4"><i class="bi bi-eye"></i></button>
+                    <button class="ibtn ib-e" title="Edit" data-bs-toggle="modal" data-bs-target="#editModal"><i class="bi bi-pencil"></i></button>
+                    <button class="ibtn ib-x" title="Hapus" data-nm="Fajar Hidayat" data-bs-toggle="modal" data-bs-target="#delModal"><i class="bi bi-trash3"></i></button>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td class="td-no">07</td>
+                <td>
+                  <div class="td-member">
+                    <div class="mem-av" style="background:linear-gradient(135deg,#701a75,#e879f9)">NP</div>
+                    <div class="mem-info">
+                      <div class="mem-nm">Nanda Pratiwi</div>
+                      <div class="mem-em"><i class="bi bi-envelope"></i> nanda@pmssystem.id</div>
+                    </div>
+                  </div>
+                </td>
+                <td><span class="role-badge rb-qa">QA</span></td>
+                <td>
+                  <div class="td-contact">
+                    <span><i class="bi bi-telephone"></i> 0812-8765-4321</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="td-skills">
+                    <span class="skill-tag">Selenium</span>
+                    <span class="skill-tag">Postman</span>
+                    <span class="skill-tag">JIRA</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="td-proj">
+                    <span class="proj-chip"><i class="bi bi-kanban" style="font-size:10px;opacity:.6"></i> E-Commerce Mobile</span>
+                    
+                  </div>
+                </td>
+                <td>
+                  <div class="task-wrap">
+                    <div class="task-lbl"><span>9/9</span><span>100%</span></div>
+                    <div class="task-bar"><div class="task-fill" style="width:100%;background:#00e5a0"></div></div>
+                  </div>
+                </td>
+                <td><span class="rbadge rb-aktif">Aktif</span></td>
+                <td class="td-dt">01 Apr 2024</td>
+                <td class="td-dt" style="color:var(--muted)">1 jam lalu</td>
+                <td>
+                  <div class="act-row">
+                    <button class="ibtn ib-v" title="Lihat Detail" data-bs-toggle="modal" data-bs-target="#detailModal"
+                      data-nm="Nanda Pratiwi" data-role="QA" data-email="nanda@pmssystem.id"
+                      data-phone="0812-8765-4321" data-proj="E-Commerce Mobile" data-status="Aktif"
+                      data-tgl="01 Apr 2024" data-tasks="9/9"><i class="bi bi-eye"></i></button>
+                    <button class="ibtn ib-e" title="Edit" data-bs-toggle="modal" data-bs-target="#editModal"><i class="bi bi-pencil"></i></button>
+                    <button class="ibtn ib-x" title="Hapus" data-nm="Nanda Pratiwi" data-bs-toggle="modal" data-bs-target="#delModal"><i class="bi bi-trash3"></i></button>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td class="td-no">08</td>
+                <td>
+                  <div class="td-member">
+                    <div class="mem-av" style="background:linear-gradient(135deg,#7f1d1d,#f87171)">RH</div>
+                    <div class="mem-info">
+                      <div class="mem-nm">Rizky Hartono</div>
+                      <div class="mem-em"><i class="bi bi-envelope"></i> rizky@pmssystem.id</div>
+                    </div>
+                  </div>
+                </td>
+                <td><span class="role-badge rb-dev">Developer</span></td>
+                <td>
+                  <div class="td-contact">
+                    <span><i class="bi bi-telephone"></i> 0856-9876-1234</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="td-skills">
+                    <span class="skill-tag">Kotlin</span>
+                    <span class="skill-tag">Android</span>
+                    <span class="skill-tag">Firebase</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="td-proj">
+                    <span class="proj-chip"><i class="bi bi-kanban" style="font-size:10px;opacity:.6"></i> Manajemen Aset</span>
+                    
+                  </div>
+                </td>
+                <td>
+                  <div class="task-wrap">
+                    <div class="task-lbl"><span>1/3</span><span>33%</span></div>
+                    <div class="task-bar"><div class="task-fill" style="width:33%;background:#f59e0b"></div></div>
+                  </div>
+                </td>
+                <td><span class="rbadge rb-nonaktif">Nonaktif</span></td>
+                <td class="td-dt">10 Feb 2024</td>
+                <td class="td-dt" style="color:var(--muted)">2 minggu lalu</td>
+                <td>
+                  <div class="act-row">
+                    <button class="ibtn ib-v" title="Lihat Detail" data-bs-toggle="modal" data-bs-target="#detailModal"
+                      data-nm="Rizky Hartono" data-role="Developer" data-email="rizky@pmssystem.id"
+                      data-phone="0856-9876-1234" data-proj="Manajemen Aset" data-status="Nonaktif"
+                      data-tgl="10 Feb 2024" data-tasks="1/3"><i class="bi bi-eye"></i></button>
+                    <button class="ibtn ib-e" title="Edit" data-bs-toggle="modal" data-bs-target="#editModal"><i class="bi bi-pencil"></i></button>
+                    <button class="ibtn ib-x" title="Hapus" data-nm="Rizky Hartono" data-bs-toggle="modal" data-bs-target="#delModal"><i class="bi bi-trash3"></i></button>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td class="td-no">09</td>
+                <td>
+                  <div class="td-member">
+                    <div class="mem-av" style="background:linear-gradient(135deg,#0f4c81,#38bdf8)">LW</div>
+                    <div class="mem-info">
+                      <div class="mem-nm">Lina Wijayanti</div>
+                      <div class="mem-em"><i class="bi bi-envelope"></i> lina@pmssystem.id</div>
+                    </div>
+                  </div>
+                </td>
+                <td><span class="role-badge rb-des">Designer</span></td>
+                <td>
+                  <div class="td-contact">
+                    <span><i class="bi bi-telephone"></i> 0821-5555-6666</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="td-skills">
+                    <span class="skill-tag">Adobe XD</span>
+                    <span class="skill-tag">Illustrator</span>
+                    <span class="skill-tag">HTML</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="td-proj">
+                    <span class="proj-chip"><i class="bi bi-kanban" style="font-size:10px;opacity:.6"></i> PPID Kota Pekalongan</span>
+                    
+                  </div>
+                </td>
+                <td>
+                  <div class="task-wrap">
+                    <div class="task-lbl"><span>6/7</span><span>85%</span></div>
+                    <div class="task-bar"><div class="task-fill" style="width:85%;background:#00c8ff"></div></div>
+                  </div>
+                </td>
+                <td><span class="rbadge rb-aktif">Aktif</span></td>
+                <td class="td-dt">05 Mar 2024</td>
+                <td class="td-dt" style="color:var(--muted)">4 jam lalu</td>
+                <td>
+                  <div class="act-row">
+                    <button class="ibtn ib-v" title="Lihat Detail" data-bs-toggle="modal" data-bs-target="#detailModal"
+                      data-nm="Lina Wijayanti" data-role="Designer" data-email="lina@pmssystem.id"
+                      data-phone="0821-5555-6666" data-proj="PPID Kota Pekalongan" data-status="Aktif"
+                      data-tgl="05 Mar 2024" data-tasks="6/7"><i class="bi bi-eye"></i></button>
+                    <button class="ibtn ib-e" title="Edit" data-bs-toggle="modal" data-bs-target="#editModal"><i class="bi bi-pencil"></i></button>
+                    <button class="ibtn ib-x" title="Hapus" data-nm="Lina Wijayanti" data-bs-toggle="modal" data-bs-target="#delModal"><i class="bi bi-trash3"></i></button>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td class="td-no">10</td>
+                <td>
+                  <div class="td-member">
+                    <div class="mem-av" style="background:linear-gradient(135deg,#14532d,#4ade80)">AG</div>
+                    <div class="mem-info">
+                      <div class="mem-nm">Agus Gunawan</div>
+                      <div class="mem-em"><i class="bi bi-envelope"></i> agus@pmssystem.id</div>
+                    </div>
+                  </div>
+                </td>
+                <td><span class="role-badge rb-mgr">Manager</span></td>
+                <td>
+                  <div class="td-contact">
+                    <span><i class="bi bi-telephone"></i> 0878-7777-8888</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="td-skills">
+                    <span class="skill-tag">Agile</span>
+                    <span class="skill-tag">Confluence</span>
+                    <span class="skill-tag">Trello</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="td-proj">
+                    <span class="proj-chip"><i class="bi bi-kanban" style="font-size:10px;opacity:.6"></i> Sistem Absensi</span>
+                    <span class="proj2">+1 lainnya</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="task-wrap">
+                    <div class="task-lbl"><span>8/10</span><span>80%</span></div>
+                    <div class="task-bar"><div class="task-fill" style="width:80%;background:#00c8ff"></div></div>
+                  </div>
+                </td>
+                <td><span class="rbadge rb-aktif">Aktif</span></td>
+                <td class="td-dt">18 Jan 2024</td>
+                <td class="td-dt" style="color:var(--muted)">30 mnt lalu</td>
+                <td>
+                  <div class="act-row">
+                    <button class="ibtn ib-v" title="Lihat Detail" data-bs-toggle="modal" data-bs-target="#detailModal"
+                      data-nm="Agus Gunawan" data-role="Manager" data-email="agus@pmssystem.id"
+                      data-phone="0878-7777-8888" data-proj="Sistem Absensi" data-status="Aktif"
+                      data-tgl="18 Jan 2024" data-tasks="8/10"><i class="bi bi-eye"></i></button>
+                    <button class="ibtn ib-e" title="Edit" data-bs-toggle="modal" data-bs-target="#editModal"><i class="bi bi-pencil"></i></button>
+                    <button class="ibtn ib-x" title="Hapus" data-nm="Agus Gunawan" data-bs-toggle="modal" data-bs-target="#delModal"><i class="bi bi-trash3"></i></button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="tbl-foot">
+          <div class="tbl-info">Menampilkan <b>10</b> dari <b>10</b> anggota</div>
+          <div class="pag">
+            <button class="pb" disabled><i class="bi bi-chevron-left"></i></button>
+            <button class="pb active">1</button>
+            <button class="pb" disabled><i class="bi bi-chevron-right"></i></button>
+          </div>
+        </div>
+      </div>
+
+    </main>
+<footer class="page-footer">
+      <div class="ft-copy">&copy; 2025 <span>Project Management System</span> &mdash; v2.0.0</div>
+      <div class="ft-status"><span class="ft-dot"></span>Semua sistem berjalan normal</div>
+      <div class="ft-links"><a href="#">Dokumentasi</a><a href="#">Kebijakan</a><a href="#">Support</a></div>
+    </footer>
+  </div>
+</div>
+
+<button class="fab" id="fab" aria-label="Kembali ke atas">
+  <div class="fab-ring"></div><div class="fab-orbit"></div>
+  <div class="fab-inner"><i class="bi bi-chevron-up"></i></div>
+</button>
+
+<style>@keyframes sh-arrow{0%,100%{transform:translateX(0)}50%{transform:translateX(5px)}}</style>
+
+
+<!-- MODAL: TAMBAH ANGGOTA -->
+<div class="modal fade m-dark m-cyan" id="addModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="m-hd">
+        <h5 class="m-hd-title"><i class="bi bi-person-plus-fill"></i> Tambah Anggota Tim</h5>
+        <button class="m-close" data-bs-dismiss="modal"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <div class="m-bd">
+        <div class="row g-3">
+          <div class="col-12 col-sm-6">
+            <label class="fm-lbl">Nama Lengkap <span class="req">*</span></label>
+            <input type="text" class="fmi" placeholder="Masukkan nama lengkap..."/>
+          </div>
+          <div class="col-12 col-sm-6">
+            <label class="fm-lbl">Email <span class="req">*</span></label>
+            <input type="email" class="fmi" placeholder="nama@domain.com"/>
+          </div>
+          <div class="col-12 col-sm-6">
+            <label class="fm-lbl">No. Telepon</label>
+            <input type="text" class="fmi" placeholder="08xx-xxxx-xxxx"/>
+          </div>
+          <div class="col-12 col-sm-6">
+            <label class="fm-lbl">Role / Jabatan <span class="req">*</span></label>
+            <select class="fmsel">
+              <option value="">-- Pilih Role --</option>
+              <option>Admin</option>
+              <option>Manager</option>
+              <option>Developer</option>
+              <option>Designer</option>
+              <option>QA</option>
+            </select>
+          </div>
+          <div class="col-12 col-sm-6">
+            <label class="fm-lbl">Skill Utama</label>
+            <input type="text" class="fmi" placeholder="Contoh: Laravel, Vue.js..."/>
+          </div>
+          <div class="col-12 col-sm-6">
+            <label class="fm-lbl">Project Terkait</label>
+            <select class="fmsel">
+              <option value="">-- Tidak ada --</option>
+              <option>PPID Kota Pekalongan</option>
+              <option>Sistem Absensi</option>
+              <option>E-Commerce Mobile</option>
+              <option>Manajemen Aset</option>
+            </select>
+          </div>
+          <div class="col-12 col-sm-6">
+            <label class="fm-lbl">Status <span class="req">*</span></label>
+            <select class="fmsel">
+              <option value="">-- Pilih Status --</option>
+              <option>Aktif</option>
+              <option>Cuti</option>
+              <option>Nonaktif</option>
+            </select>
+          </div>
+          <div class="col-12 col-sm-6">
+            <label class="fm-lbl">Tanggal Bergabung</label>
+            <input type="date" class="fmi"/>
+          </div>
+          <div class="col-12">
+            <label class="fm-lbl">Alamat</label>
+            <input type="text" class="fmi" placeholder="Alamat lengkap anggota..."/>
+          </div>
+          <div class="col-12">
+            <label class="fm-lbl">Catatan / Keterangan</label>
+            <textarea class="fmta" placeholder="Catatan tambahan tentang anggota tim..."></textarea>
+          </div>
+        </div>
+      </div>
+      <div class="m-ft">
+        <button class="btn-mcancel" data-bs-dismiss="modal"><i class="bi bi-x-lg"></i> Batal</button>
+        <button class="btn-msave"><span><i class="bi bi-person-check-fill"></i> Tambah Anggota</span></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: EDIT ANGGOTA -->
+<div class="modal fade m-dark m-cyan" id="editModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="m-hd">
+        <h5 class="m-hd-title"><i class="bi bi-pencil-square"></i> Edit Anggota Tim</h5>
+        <button class="m-close" data-bs-dismiss="modal"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <div class="m-bd">
+        <div class="row g-3">
+          <div class="col-12 col-sm-6">
+            <label class="fm-lbl">Nama Lengkap <span class="req">*</span></label>
+            <input type="text" class="fmi" value="Andi Wijaya"/>
+          </div>
+          <div class="col-12 col-sm-6">
+            <label class="fm-lbl">Email <span class="req">*</span></label>
+            <input type="email" class="fmi" value="andi@pmssystem.id"/>
+          </div>
+          <div class="col-12 col-sm-6">
+            <label class="fm-lbl">No. Telepon</label>
+            <input type="text" class="fmi" value="0812-3456-7890"/>
+          </div>
+          <div class="col-12 col-sm-6">
+            <label class="fm-lbl">Role / Jabatan <span class="req">*</span></label>
+            <select class="fmsel">
+              <option>Admin</option><option>Manager</option>
+              <option selected>Developer</option><option>Designer</option><option>QA</option>
+            </select>
+          </div>
+          <div class="col-12 col-sm-6">
+            <label class="fm-lbl">Skill Utama</label>
+            <input type="text" class="fmi" value="Laravel, Vue.js, MySQL"/>
+          </div>
+          <div class="col-12 col-sm-6">
+            <label class="fm-lbl">Project Terkait</label>
+            <select class="fmsel">
+              <option selected>PPID Kota Pekalongan</option>
+              <option>Sistem Absensi</option><option>E-Commerce Mobile</option><option>Manajemen Aset</option>
+            </select>
+          </div>
+          <div class="col-12 col-sm-6">
+            <label class="fm-lbl">Status <span class="req">*</span></label>
+            <select class="fmsel"><option selected>Aktif</option><option>Cuti</option><option>Nonaktif</option></select>
+          </div>
+          <div class="col-12 col-sm-6">
+            <label class="fm-lbl">Tanggal Bergabung</label>
+            <input type="date" class="fmi" value="2024-01-12"/>
+          </div>
+          <div class="col-12">
+            <label class="fm-lbl">Catatan / Keterangan</label>
+            <textarea class="fmta">Senior developer dengan pengalaman 4 tahun di Laravel dan ekosistem PHP.</textarea>
+          </div>
+        </div>
+      </div>
+      <div class="m-ft">
+        <button class="btn-mcancel" data-bs-dismiss="modal"><i class="bi bi-x-lg"></i> Batal</button>
+        <button class="btn-msave"><span><i class="bi bi-floppy-fill"></i> Simpan Perubahan</span></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: DETAIL ANGGOTA -->
+<div class="modal fade m-dark m-green" id="detailModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-md modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="m-hd">
+        <h5 class="m-hd-title"><i class="bi bi-person-badge-fill"></i> Detail Anggota</h5>
+        <button class="m-close" data-bs-dismiss="modal"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <div class="det-hd">
+        <div class="det-av" id="detAv" style="background:linear-gradient(135deg,#0072c6,#00c8ff)">AW</div>
+        <div>
+          <div class="det-nm" id="detNm">Andi Wijaya</div>
+          <div class="det-role"><span class="role-badge rb-dev" id="detRole">Developer</span></div>
+          <div class="det-email"><i class="bi bi-envelope"></i> <span id="detEmail">andi@pmssystem.id</span></div>
+        </div>
+      </div>
+      <div class="m-bd" style="padding-top:14px">
+        <div class="det-grid">
+          <div class="dg-item"><div class="dg-lbl">No. Telepon</div><div class="dg-val" id="detPhone">—</div></div>
+          <div class="dg-item"><div class="dg-lbl">Status</div><div class="dg-val g" id="detStatus">—</div></div>
+          <div class="dg-item"><div class="dg-lbl">Project</div><div class="dg-val c" id="detProj">—</div></div>
+          <div class="dg-item"><div class="dg-lbl">Task Selesai</div><div class="dg-val w" id="detTasks">—</div></div>
+          <div class="dg-item" style="grid-column:1/-1"><div class="dg-lbl">Tanggal Bergabung</div><div class="dg-val" id="detTgl">—</div></div>
+        </div>
+      </div>
+      <div class="m-ft">
+        <button class="btn-mcancel" data-bs-dismiss="modal"><i class="bi bi-x-lg"></i> Tutup</button>
+        <button class="btn-msave" data-bs-dismiss="modal" data-bs-toggle="modal" data-bs-target="#editModal"><span><i class="bi bi-pencil"></i> Edit</span></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: HAPUS ANGGOTA -->
+<div class="modal fade m-dark m-red" id="delModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="m-hd">
+        <h5 class="m-hd-title"><i class="bi bi-trash3-fill"></i> Hapus Anggota</h5>
+        <button class="m-close" data-bs-dismiss="modal"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <div class="m-bd">
+        <div class="warn-box">
+          <i class="bi bi-exclamation-triangle-fill"></i>
+          <p>Anda akan menghapus anggota <strong id="delNm">ini</strong> dari sistem secara permanen. Semua data terkait akan ikut terhapus.</p>
+        </div>
+        <p style="font-size:12px;color:var(--muted);font-family:var(--mono)"><i class="bi bi-info-circle"></i>&nbsp;Tindakan ini tidak dapat dibatalkan.</p>
+      </div>
+      <div class="m-ft">
+        <button class="btn-mcancel" data-bs-dismiss="modal"><i class="bi bi-x-lg"></i> Batalkan</button>
+        <button class="btn-mdel"><span><i class="bi bi-trash3-fill"></i> Ya, Hapus</span></button>
+      </div>
+      <div class="modal-drain"><div class="drain-fill" id="drainDel"></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: LOGOUT -->
+<div class="modal fade m-dark m-red" id="logoutModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="m-hd">
+        <h5 class="m-hd-title"><i class="bi bi-box-arrow-right"></i> Konfirmasi Logout</h5>
+        <button class="m-close" data-bs-dismiss="modal"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <div class="m-bd">
+        <div class="warn-box">
+          <i class="bi bi-exclamation-triangle-fill"></i>
+          <p>Apakah Anda yakin ingin <strong>keluar dari sistem</strong>? Semua sesi aktif akan diakhiri.</p>
+        </div>
+      </div>
+      <div class="m-ft">
+        <button class="btn-mcancel" data-bs-dismiss="modal"><i class="bi bi-x-lg"></i> Batalkan</button>
+        <button class="btn-mdel"><span><i class="bi bi-box-arrow-right"></i> Ya, Logout</span></button>
+      </div>
+      <div class="modal-drain"><div class="drain-fill" id="drainLogout"></div></div>
+    </div>
+  </div>
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
+<script>
+AOS.init({once:true,easing:'ease-out-cubic',duration:500,offset:20});
+
+/* Canvas */
+(function(){
+  var cv=document.getElementById('bgc'),ctx=cv.getContext('2d'),W,H,ns=[];
+  var C=['rgba(0,200,255,','rgba(0,114,198,','rgba(0,229,160,'];
+  function init(){W=cv.width=innerWidth;H=cv.height=innerHeight;ns=[];var n=Math.max(14,Math.floor(W*H/34000));for(var i=0;i<n;i++)ns.push({x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*.28,vy:(Math.random()-.5)*.28,r:Math.random()*1.8+.7,c:C[~~(Math.random()*3)],p:Math.random()*6.28});}
+  function draw(){ctx.clearRect(0,0,W,H);ns.forEach(function(n){n.x+=n.vx;n.y+=n.vy;n.p+=.014;if(n.x<-8)n.x=W+8;if(n.x>W+8)n.x=-8;if(n.y<-8)n.y=H+8;if(n.y>H+8)n.y=-8;});for(var i=0;i<ns.length;i++)for(var j=i+1;j<ns.length;j++){var a=ns[i],b=ns[j],dx=a.x-b.x,dy=a.y-b.y,d=Math.sqrt(dx*dx+dy*dy);if(d<130){ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.strokeStyle='rgba(0,140,200,'+(1-d/130)*.13+')';ctx.lineWidth=.6;ctx.stroke();}}
+  ns.forEach(function(n){var a=.38+Math.sin(n.p)*.28;ctx.beginPath();ctx.arc(n.x,n.y,n.r*(.85+Math.sin(n.p)*.15),0,6.28);ctx.fillStyle=n.c+a+')';ctx.fill();});requestAnimationFrame(draw);}
+  window.addEventListener('resize',init,{passive:true});init();draw();
+})();
+
+/* Sidebar */
+var sb=document.getElementById('sidebar'),mw=document.getElementById('mainWrap'),
+    ov=document.getElementById('sbOverlay'),tbt=document.getElementById('btnToggle'),
+    tbi=document.getElementById('toggleIcon'),col=false;
+function isMob(){return window.innerWidth<992;}
+function openSB(){sb.classList.add('sb-open');ov.classList.add('sb-open');ov.style.display='block';document.body.style.overflow='hidden';}
+function closeSB(){sb.classList.remove('sb-open');ov.classList.remove('sb-open');ov.style.display='';document.body.style.overflow='';}
+tbt.addEventListener('click',function(){
+  if(isMob()){sb.classList.contains('sb-open')?closeSB():openSB();}
+  else{col=!col;sb.classList.toggle('collapsed',col);mw.classList.toggle('sb-expanded',col);tbi.className=col?'bi bi-layout-sidebar':'bi bi-layout-sidebar-inset';}
+});
+ov.addEventListener('click',closeSB);
+window.addEventListener('resize',function(){if(!isMob())closeSB();},{passive:true});
+document.querySelectorAll('.nav-link').forEach(function(l){
+  l.addEventListener('click',function(e){
+    if(this.getAttribute('href')==='#')e.preventDefault();
+    document.querySelectorAll('.nav-link').forEach(function(x){x.classList.remove('active');});
+    this.classList.add('active');
+    if(isMob())closeSB();
+  });
+});
+
+/* User dropdown */
+var ut=document.getElementById('userTrigger'),ud=document.getElementById('userDd');
+ut.addEventListener('click',function(){var o=ud.classList.toggle('open');ut.classList.toggle('open',o);});
+document.addEventListener('click',function(e){if(!ut.contains(e.target)&&!ud.contains(e.target)){ud.classList.remove('open');ut.classList.remove('open');}});
+
+/* FAB */
+var fab=document.getElementById('fab'),tk=false;
+window.addEventListener('scroll',function(){if(!tk){requestAnimationFrame(function(){fab.classList.toggle('visible',scrollY>300);tk=false;});tk=true;}},{passive:true});
+fab.addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});});
+
+/* Modal drain */
+function initDrain(mid,fid){
+  var m=document.getElementById(mid);if(!m)return;
+  m.addEventListener('show.bs.modal',function(){var f=document.getElementById(fid);if(!f)return;f.classList.remove('go');void f.offsetWidth;f.classList.add('go');});
+  m.addEventListener('hidden.bs.modal',function(){var f=document.getElementById(fid);if(f)f.classList.remove('go');});
+}
+initDrain('delModal','drainDel');
+initDrain('logoutModal','drainLogout');
+
+/* Delete: inject name */
+document.querySelectorAll('.ib-x').forEach(function(btn){
+  btn.addEventListener('click',function(){
+    var el=document.getElementById('delNm');if(el)el.textContent=this.dataset.nm||'ini';
+  });
+});
+
+/* Detail modal populate */
+document.querySelectorAll('.ib-v').forEach(function(btn){
+  btn.addEventListener('click',function(){
+    var d=this.dataset;
+    var set=function(id,val){var e=document.getElementById(id);if(e)e.textContent=val||'—';};
+    set('detNm',d.nm);set('detRole',d.role);set('detEmail',d.email);
+    set('detPhone',d.phone);set('detProj',d.proj);set('detStatus',d.status);
+    set('detTgl',d.tgl);set('detTasks',d.tasks);
+    // Set avatar initials
+    var av=document.getElementById('detAv');
+    if(av)av.textContent=d.nm?d.nm.split(' ').map(function(w){return w[0];}).join('').substring(0,2).toUpperCase():'?';
+  });
+});
+
+/* Pagination */
+document.querySelectorAll('.pb:not([disabled])').forEach(function(b){
+  b.addEventListener('click',function(){
+    if(this.classList.contains('active')||this.querySelector('i'))return;
+    this.closest('.pag').querySelectorAll('.pb').forEach(function(x){x.classList.remove('active');});
+    this.classList.add('active');
+  });
+});
+
+/* Task progress entrance animation */
+document.querySelectorAll('.task-fill').forEach(function(bar){
+  var t=bar.style.width;bar.style.width='0%';
+  setTimeout(function(){bar.style.width=t;},500);
+});
+</script>
+</body>
+</html>

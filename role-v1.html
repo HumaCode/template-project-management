@@ -1,0 +1,1065 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Role &amp; Permission &mdash; Project Management System</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+  :root{
+    --bg:#050e1d;--sw-w:260px;--swc:72px;--th:64px;
+    --cyan:#00c8ff;--blue:#0072c6;
+    --ok:#00e5a0;--warn:#f59e0b;--err:#ff4d6d;--purple:#a78bfa;
+    --txt:#e2eaf4;--dim:#7a90a8;--muted:#3d5068;
+    --bd:rgba(0,200,255,.10);--bdh:rgba(0,200,255,.22);
+    --card:rgba(7,21,40,.95);
+    --ease:cubic-bezier(.4,0,.2,1);--dur:.3s;
+    --r:14px;--rs:8px;
+    --font:'Outfit',sans-serif;--mono:'DM Mono',monospace;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:var(--font);background:var(--bg);color:var(--txt);min-height:100vh;overflow-x:hidden}
+  a{text-decoration:none;color:inherit}
+  *{scrollbar-width:thin;scrollbar-color:rgba(0,200,255,.15) transparent}
+  *::-webkit-scrollbar{width:4px;height:4px}
+  *::-webkit-scrollbar-thumb{background:rgba(0,200,255,.2);border-radius:4px}
+
+  /* Canvas */
+  #bgc{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.4}
+
+  /* Layout */
+  .layout{display:flex;min-height:100vh;position:relative;z-index:1}
+
+  /* ══ Sidebar ══ */
+  .sidebar{position:fixed;top:0;left:0;bottom:0;width:var(--sw-w);background:#050e1d;border-right:1px solid var(--bd);display:flex;flex-direction:column;z-index:400;transition:transform var(--dur) var(--ease),width var(--dur) var(--ease);overflow:hidden}
+  .sidebar::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--cyan),var(--blue),var(--cyan),transparent);background-size:200% 100%;animation:bflow 4s linear infinite;z-index:1}
+  @keyframes bflow{to{background-position:200% 0}}
+  .sidebar::after{content:'';position:absolute;inset:0;pointer-events:none;background-image:linear-gradient(rgba(0,200,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,200,255,.03) 1px,transparent 1px);background-size:28px 28px}
+  .sb-brand{display:flex;align-items:center;gap:12px;padding:0 18px;height:var(--th);border-bottom:1px solid var(--bd);flex-shrink:0;position:relative;z-index:1}
+  .sb-logo{width:38px;height:38px;flex-shrink:0;border-radius:10px;background:linear-gradient(135deg,var(--cyan),var(--blue));display:grid;place-items:center;font-size:18px;color:#fff;position:relative;overflow:hidden;animation:logopulse 3s ease-in-out infinite}
+  .sb-logo::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.25),transparent 60%)}
+  @keyframes logopulse{0%,100%{box-shadow:0 0 16px rgba(0,200,255,.35);transform:scale(1)}50%{box-shadow:0 0 28px rgba(0,200,255,.6);transform:scale(1.05)}}
+  .sb-title{overflow:hidden;white-space:nowrap;transition:opacity var(--dur) var(--ease)}
+  .sb-title .name{font-size:15px;font-weight:800;display:block}
+  .sb-title .sub{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase}
+  .sb-nav{flex:1;overflow-y:auto;overflow-x:hidden;padding:10px 0;position:relative;z-index:1}
+  .nav-section{padding:14px 20px 5px;font-family:var(--mono);font-size:9.5px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;white-space:nowrap;transition:opacity var(--dur) var(--ease)}
+  .nav-divider{height:1px;background:var(--bd);margin:6px 16px}
+  .nav-link{display:flex;align-items:center;gap:12px;padding:10px 20px;margin:1px 8px;border-radius:10px;color:var(--dim);font-size:13.5px;font-weight:500;cursor:pointer;position:relative;transition:background var(--dur) var(--ease),color var(--dur) var(--ease),transform var(--dur) var(--ease);white-space:nowrap;overflow:hidden}
+  .nav-link::before{content:'';position:absolute;left:0;top:20%;height:60%;width:3px;background:linear-gradient(to bottom,var(--cyan),var(--blue));border-radius:0 3px 3px 0;transform:scaleY(0);transition:transform .2s var(--ease)}
+  .nav-link:hover{background:rgba(0,200,255,.07);color:var(--txt);transform:translateX(3px)}
+  .nav-link:hover::before,.nav-link.active::before{transform:scaleY(1)}
+  .nav-link.active{background:linear-gradient(135deg,rgba(0,114,198,.2),rgba(0,200,255,.1));color:var(--cyan);border:1px solid rgba(0,200,255,.15)}
+  .nav-icon{width:20px;flex-shrink:0;display:grid;place-items:center;font-size:15px;color:var(--muted);transition:color var(--dur) var(--ease),transform var(--dur) var(--ease)}
+  .nav-link:hover .nav-icon,.nav-link.active .nav-icon{color:var(--cyan);transform:scale(1.15)}
+  .nav-text{transition:opacity var(--dur) var(--ease)}
+  .nav-badge{margin-left:auto;flex-shrink:0;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700;font-family:var(--mono);background:rgba(0,200,255,.15);color:var(--cyan);border:1px solid rgba(0,200,255,.2)}
+  .sb-footer{padding:14px 16px;border-top:1px solid var(--bd);flex-shrink:0;position:relative;z-index:1}
+  .sb-user{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--rs);background:rgba(0,200,255,.04);border:1px solid var(--bd);cursor:pointer;transition:background var(--dur) var(--ease),border-color var(--dur) var(--ease)}
+  .sb-user:hover{background:rgba(0,200,255,.09);border-color:var(--bdh)}
+  .sb-av{width:34px;height:34px;border-radius:50%;flex-shrink:0;background:linear-gradient(135deg,var(--cyan),var(--blue));display:grid;place-items:center;font-size:13px;font-weight:700;font-family:var(--mono);color:#fff;box-shadow:0 0 12px rgba(0,200,255,.3)}
+  .sb-user-info{overflow:hidden;flex:1;min-width:0}
+  .sb-user-info .uname{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .sb-user-info .urole{font-family:var(--mono);font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
+  .sb-chev{font-size:12px;color:var(--muted);flex-shrink:0;transition:color var(--dur) var(--ease)}
+  .sb-user:hover .sb-chev{color:var(--cyan)}
+  .sidebar.collapsed{width:var(--swc)}
+  .sidebar.collapsed .sb-title,.sidebar.collapsed .nav-text,.sidebar.collapsed .nav-badge,.sidebar.collapsed .nav-section,.sidebar.collapsed .sb-user-info,.sidebar.collapsed .sb-chev{opacity:0;width:0;pointer-events:none;overflow:hidden}
+  .sidebar.collapsed .nav-link{justify-content:center;padding:10px}
+  .sidebar.collapsed .sb-user{justify-content:center;padding:8px}
+  .sidebar.collapsed .nav-link::before{display:none}
+  .sidebar.collapsed .nav-link::after{content:attr(data-tip);position:absolute;left:calc(100% + 10px);top:50%;transform:translateY(-50%);background:#050e1d;border:1px solid var(--bdh);color:var(--txt);font-size:12px;font-weight:500;padding:5px 10px;border-radius:6px;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .15s;box-shadow:0 4px 20px rgba(0,0,0,.5);z-index:999}
+  .sidebar.collapsed .nav-link:hover::after{opacity:1}
+  .sb-overlay{display:none;position:fixed;inset:0;background:rgba(2,8,18,.78);z-index:300;cursor:pointer;backdrop-filter:blur(2px)}
+  /* Main */
+  .main-wrap{margin-left:var(--sw-w);flex:1;display:flex;flex-direction:column;min-height:100vh;transition:margin-left var(--dur) var(--ease)}
+  .main-wrap.sb-expanded{margin-left:var(--swc)}
+  /* Topbar */
+  .topbar{height:var(--th);position:sticky;top:0;z-index:200;background:rgba(5,14,29,.93);backdrop-filter:blur(16px);border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:12px;padding:0 20px}
+  .btn-toggle{width:36px;height:36px;flex-shrink:0;border-radius:var(--rs);background:rgba(0,200,255,.06);border:1px solid var(--bd);display:grid;place-items:center;cursor:pointer;color:var(--dim);font-size:17px;transition:background var(--dur),color var(--dur),transform var(--dur);-webkit-tap-highlight-color:transparent}
+  .btn-toggle:hover{background:rgba(0,200,255,.12);color:var(--cyan);border-color:var(--bdh);transform:scale(1.05)}
+  .tb-crumb{font-family:var(--mono);font-size:12px;color:var(--muted);display:flex;align-items:center;gap:5px}
+  .tb-crumb a{color:var(--muted);transition:color var(--dur)}.tb-crumb a:hover{color:var(--cyan)}
+  .tb-crumb .cur{color:var(--cyan)}
+  .tb-search{flex:1;max-width:280px;position:relative}
+  .tb-search input{width:100%;height:36px;border-radius:var(--rs);background:rgba(0,200,255,.05);border:1px solid var(--bd);padding:0 12px 0 36px;color:var(--txt);font-family:var(--font);font-size:13px;outline:none;transition:border-color .25s,background .25s}
+  .tb-search input:focus{border-color:rgba(0,200,255,.3);background:rgba(0,200,255,.08)}
+  .tb-search input::placeholder{color:var(--muted)}
+  .tb-search i{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:14px}
+  .tb-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+  .btn-bell{width:36px;height:36px;border-radius:var(--rs);background:rgba(0,200,255,.05);border:1px solid var(--bd);display:grid;place-items:center;cursor:pointer;color:var(--dim);font-size:17px;position:relative;transition:background .2s,color .2s;-webkit-tap-highlight-color:transparent}
+  .btn-bell:hover{background:rgba(0,200,255,.12);color:var(--cyan)}
+  .bell-dot{position:absolute;top:6px;right:6px;width:7px;height:7px;border-radius:50%;background:var(--err);border:1.5px solid var(--bg);animation:dping 2s ease-in-out infinite}
+  @keyframes dping{0%,100%{transform:scale(1)}50%{transform:scale(1.3)}}
+  .user-trigger{display:flex;align-items:center;gap:8px;padding:4px 10px 4px 5px;border-radius:40px;background:rgba(0,200,255,.05);border:1px solid var(--bd);cursor:pointer;transition:background .2s,border-color .2s;-webkit-tap-highlight-color:transparent}
+  .user-trigger:hover,.user-trigger.open{background:rgba(0,200,255,.1);border-color:var(--bdh)}
+  .user-trigger.open .ut-arrow{transform:rotate(180deg)}
+  .ut-av{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--cyan),var(--blue));display:grid;place-items:center;font-size:11px;font-weight:700;font-family:var(--mono);color:#fff;flex-shrink:0}
+  .ut-info .ut-name{font-size:13px;font-weight:600;line-height:1.2}
+  .ut-info .ut-role{font-size:10px;color:var(--muted);font-family:var(--mono)}
+  .ut-arrow{font-size:10px;color:var(--muted);transition:transform var(--dur) var(--ease);flex-shrink:0}
+  .user-dd{position:absolute;top:calc(100% + 8px);right:0;width:230px;background:#050e1d;border:1px solid var(--bdh);border-radius:var(--r);box-shadow:0 20px 60px rgba(0,0,0,.65);opacity:0;visibility:hidden;transform:translateY(-8px) scale(.97);transition:all .25s var(--ease);z-index:999;overflow:hidden}
+  .user-dd.open{opacity:1;visibility:visible;transform:translateY(0) scale(1)}
+  .dd-hd{padding:14px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:10px;background:rgba(0,200,255,.03)}
+  .dd-av{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--cyan),var(--blue));display:grid;place-items:center;font-size:15px;font-weight:700;font-family:var(--mono);color:#fff}
+  .dd-nm{font-size:14px;font-weight:600}.dd-em{font-size:11px;color:var(--muted);font-family:var(--mono)}
+  .dd-rl{display:inline-block;margin-top:3px;font-size:9px;padding:2px 6px;border-radius:8px;background:rgba(0,200,255,.1);color:var(--cyan);border:1px solid rgba(0,200,255,.2);font-family:var(--mono)}
+  .dd-body{padding:5px}
+  .dd-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:var(--rs);font-size:13px;color:var(--dim);cursor:pointer;position:relative;overflow:hidden;transition:color .2s}
+  .dd-item::before{content:'';position:absolute;inset:0;background:rgba(0,200,255,.06);transform:scaleX(0);transform-origin:left;transition:transform .2s}
+  .dd-item:hover{color:var(--txt)}.dd-item:hover::before{transform:scaleX(1)}
+  .dd-item i{position:relative;z-index:1;font-size:14px;color:var(--muted);transition:color .2s,transform .2s;flex-shrink:0}
+  .dd-item:hover i{color:var(--cyan);transform:scale(1.2)}
+  .dd-item span{position:relative;z-index:1}
+  .dd-item.dng{color:#ff8fa3}.dd-item.dng i{color:var(--err)}.dd-item.dng:hover::before{background:rgba(255,77,109,.06)}
+  .dd-sep{height:1px;background:var(--bd);margin:4px 6px}
+
+  /* ══ Page body ══ */
+  .page-body{flex:1;padding:22px 24px 0}
+  @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+  .pg-hd{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:20px;flex-wrap:wrap}
+  .pg-hd-left{display:flex;align-items:center;gap:14px}
+  .pg-ico{width:46px;height:46px;border-radius:12px;flex-shrink:0;background:linear-gradient(135deg,rgba(167,139,250,.15),rgba(0,200,255,.15));border:1px solid rgba(167,139,250,.22);display:grid;place-items:center;font-size:22px;color:var(--purple);animation:float 3s ease-in-out infinite}
+  .pg-title{font-size:20px;font-weight:800;line-height:1.2}
+  .pg-sub{font-size:12px;color:var(--muted);font-family:var(--mono);margin-top:2px}
+  .bc{display:flex;align-items:center;gap:5px;font-family:var(--mono);font-size:11.5px;color:var(--muted)}
+  .bc a{color:var(--muted);transition:color .2s}.bc a:hover{color:var(--cyan)}
+  .bc .sep{opacity:.4;font-size:10px}.bc .here{color:var(--purple)}
+  .pg-actions{display:flex;align-items:center;gap:8px}
+  .btn-add{height:38px;display:inline-flex;align-items:center;gap:7px;padding:0 18px;border-radius:var(--rs);background:linear-gradient(135deg,var(--blue),var(--cyan));border:none;color:#fff;font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;position:relative;overflow:hidden;transition:all .25s;white-space:nowrap;-webkit-tap-highlight-color:transparent}
+  .btn-add::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,var(--cyan),var(--blue));opacity:0;transition:opacity .25s}
+  .btn-add:hover{transform:translateY(-1px);box-shadow:0 5px 18px rgba(0,200,255,.28)}
+  .btn-add:hover::before{opacity:1}
+  .btn-add>span{position:relative;z-index:1;display:flex;align-items:center;gap:7px}
+
+  /* ══ Stat cards ══ */
+  .stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
+  .sc{background:var(--card);border:1px solid var(--bd);border-radius:var(--r);padding:14px 16px;display:flex;align-items:center;gap:12px;transition:border-color .25s,transform .25s;position:relative;overflow:hidden;cursor:default}
+  .sc::after{content:'';position:absolute;top:0;right:0;width:3px;height:100%;border-radius:0 var(--r) var(--r) 0}
+  .sc.c::after{background:var(--cyan)}.sc.p::after{background:var(--purple)}.sc.g::after{background:var(--ok)}
+  .sc:hover{border-color:var(--bdh);transform:translateY(-2px)}
+  .sc-ico{width:40px;height:40px;border-radius:11px;display:grid;place-items:center;font-size:18px;flex-shrink:0}
+  .sc-ico.c{background:rgba(0,200,255,.1);color:var(--cyan)}
+  .sc-ico.p{background:rgba(167,139,250,.1);color:var(--purple)}
+  .sc-ico.g{background:rgba(0,229,160,.1);color:var(--ok)}
+  .sc-val{font-size:22px;font-weight:800;line-height:1;font-family:var(--mono)}
+  .sc-lbl{font-size:11px;color:var(--muted);font-family:var(--mono);margin-top:3px}
+
+  /* ══ Role tabs card ══ */
+  .role-tabs-card{background:var(--card);border:1px solid var(--bd);border-radius:var(--r);overflow:hidden;margin-bottom:20px}
+  .role-tabs-header{padding:16px 20px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+  .rth-title{font-size:14px;font-weight:700;display:flex;align-items:center;gap:8px}
+  .rth-title i{color:var(--purple);font-size:16px}
+  .rth-sub{font-size:11.5px;color:var(--muted);font-family:var(--mono);margin-top:2px}
+  /* Role pill tabs */
+  .role-tabs{display:flex;gap:8px;padding:14px 20px;background:rgba(0,0,0,.15);border-bottom:1px solid var(--bd);flex-wrap:wrap}
+  .rtab{display:flex;align-items:center;gap:8px;padding:8px 16px;border-radius:10px;border:1px solid var(--bd);background:rgba(0,200,255,.03);cursor:pointer;transition:all .25s;-webkit-tap-highlight-color:transparent}
+  .rtab:hover{border-color:var(--bdh);background:rgba(0,200,255,.07)}
+  .rtab.active{border-color:rgba(167,139,250,.35);background:linear-gradient(135deg,rgba(167,139,250,.1),rgba(0,200,255,.07));box-shadow:0 0 20px rgba(167,139,250,.1)}
+  .rtab-av{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-size:11px;font-weight:800;font-family:var(--mono);color:#fff;flex-shrink:0}
+  .rtab-nm{font-size:13px;font-weight:700;transition:color .2s}
+  .rtab.active .rtab-nm{color:var(--purple)}
+  .rtab-cnt{font-size:10px;font-family:var(--mono);color:var(--muted);margin-top:1px}
+  .rtab-arrow{font-size:11px;color:var(--muted);margin-left:auto;opacity:0;transition:opacity .2s,color .2s}
+  .rtab.active .rtab-arrow{opacity:1;color:var(--purple)}
+  /* Role description */
+  .role-desc-row{padding:12px 20px;background:rgba(167,139,250,.03);border-bottom:1px solid rgba(167,139,250,.07);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .rdr-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:20px;font-family:var(--mono);font-size:11px;font-weight:700}
+  .rd-admin{background:rgba(255,77,109,.1);color:var(--err);border:1px solid rgba(255,77,109,.2)}
+  .rd-mgr{background:rgba(245,158,11,.1);color:var(--warn);border:1px solid rgba(245,158,11,.2)}
+  .rd-member{background:rgba(0,200,255,.1);color:var(--cyan);border:1px solid rgba(0,200,255,.2)}
+  .rdr-desc{font-size:12.5px;color:var(--dim)}
+  .rdr-users{font-family:var(--mono);font-size:11px;color:var(--muted);margin-left:auto}
+
+  /* ══ Permission table ══ */
+  .perm-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .perm-scroll::-webkit-scrollbar{height:4px}
+  .perm-scroll::-webkit-scrollbar-thumb{background:rgba(0,200,255,.2);border-radius:3px}
+  .perm-table{width:100%;border-collapse:collapse;min-width:640px}
+
+  /* Header row */
+  .perm-table thead tr{background:rgba(0,200,255,.025);border-bottom:1px solid rgba(0,200,255,.12)}
+  .perm-table th{padding:11px 16px;font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:1.2px;color:var(--muted);font-weight:600;white-space:nowrap;border:none}
+  .th-menu{text-align:left;min-width:190px}
+  .th-all{color:var(--dim)!important}
+  .perm-table th.ph-c{color:var(--cyan)!important}
+  .perm-table th.ph-g{color:var(--ok)!important}
+  .perm-table th.ph-a{color:var(--warn)!important}
+  .perm-table th.ph-r{color:var(--err)!important}
+  .perm-table th.ph-p{color:var(--purple)!important}
+  .ph-lbl{margin-left:5px}
+  .sw-cell{text-align:center;padding:0 8px;width:88px}
+
+  /* Group header row */
+  .grp-row td{padding:0;border-bottom:none!important}
+  .grp-label{display:flex;align-items:center;gap:10px;padding:9px 16px;background:rgba(0,0,0,.18);border-top:1px solid var(--bd);border-bottom:1px solid var(--bd);cursor:pointer;user-select:none;transition:background .2s}
+  .grp-label:hover{background:rgba(0,200,255,.04)}
+  .grp-ico{font-size:14px;flex-shrink:0}
+  .grp-ico-c{color:var(--cyan)}.grp-ico-g{color:var(--ok)}.grp-ico-a{color:var(--warn)}.grp-ico-p{color:var(--purple)}
+  .grp-label span:nth-child(2){font-family:var(--mono);font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--txt)}
+  .grp-count{font-family:var(--mono);font-size:10px;color:var(--muted);background:rgba(0,200,255,.06);border:1px solid var(--bd);padding:1px 7px;border-radius:8px}
+  .grp-toggle{margin-left:auto;background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;padding:2px 4px;border-radius:5px;transition:transform .25s var(--ease),color .2s;-webkit-tap-highlight-color:transparent}
+  .grp-toggle.collapsed{transform:rotate(-90deg)}
+  .grp-toggle:hover{color:var(--cyan)}
+
+  /* Item row */
+  .item-row td{border-bottom:1px solid rgba(0,200,255,.05);transition:background .15s;vertical-align:middle}
+  .item-row:last-child td{border-bottom:none}
+  .item-row:hover td{background:rgba(0,200,255,.025)}
+  .item-row.hidden{display:none}
+  .td-menu{padding:10px 16px;font-size:13.5px;color:var(--dim);display:flex;align-items:center;gap:9px;white-space:nowrap}
+  .menu-dot{width:6px;height:6px;border-radius:50%;background:rgba(0,200,255,.3);flex-shrink:0}
+
+  /* ══ Toggle Switch ══ */
+  .sw-wrap{display:inline-block;position:relative;width:40px;height:22px;cursor:pointer;vertical-align:middle}
+  .sw-wrap input{opacity:0;width:0;height:0;position:absolute}
+  .sw-track{position:absolute;inset:0;border-radius:11px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);transition:background .25s,border-color .25s}
+  .sw-track::after{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#3d5068;transition:transform .25s cubic-bezier(.34,1.56,.64,1),background .25s,box-shadow .25s}
+  /* Checked states per color */
+  .sw-c input:checked ~ .sw-track{background:rgba(0,200,255,.22);border-color:rgba(0,200,255,.4)}
+  .sw-c input:checked ~ .sw-track::after{transform:translateX(18px);background:var(--cyan);box-shadow:0 0 8px rgba(0,200,255,.6)}
+  .sw-g input:checked ~ .sw-track{background:rgba(0,229,160,.2);border-color:rgba(0,229,160,.4)}
+  .sw-g input:checked ~ .sw-track::after{transform:translateX(18px);background:var(--ok);box-shadow:0 0 8px rgba(0,229,160,.5)}
+  .sw-a input:checked ~ .sw-track{background:rgba(245,158,11,.18);border-color:rgba(245,158,11,.38)}
+  .sw-a input:checked ~ .sw-track::after{transform:translateX(18px);background:var(--warn);box-shadow:0 0 8px rgba(245,158,11,.5)}
+  .sw-r input:checked ~ .sw-track{background:rgba(255,77,109,.18);border-color:rgba(255,77,109,.38)}
+  .sw-r input:checked ~ .sw-track::after{transform:translateX(18px);background:var(--err);box-shadow:0 0 8px rgba(255,77,109,.5)}
+  .sw-p input:checked ~ .sw-track{background:rgba(167,139,250,.18);border-color:rgba(167,139,250,.38)}
+  .sw-p input:checked ~ .sw-track::after{transform:translateX(18px);background:var(--purple);box-shadow:0 0 8px rgba(167,139,250,.5)}
+  /* All-switch */
+  .sw-all input:checked ~ .sw-track{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.25)}
+  .sw-all input:checked ~ .sw-track::after{transform:translateX(18px);background:var(--txt)}
+
+  /* Scroll hint */
+  .scroll-hint-perm{display:none;align-items:center;gap:6px;padding:7px 16px;background:rgba(0,200,255,.03);border-bottom:1px solid var(--bd);font-family:var(--mono);font-size:11px;color:var(--muted)}
+
+  /* Save bar */
+  .save-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 20px;border-top:1px solid var(--bd);background:rgba(0,0,0,.2);flex-wrap:wrap}
+  .save-info{font-size:12.5px;color:var(--dim);font-family:var(--mono);display:flex;align-items:center;gap:7px}
+  .save-info i{color:var(--purple);font-size:14px}
+  .save-btns{display:flex;gap:8px}
+  .btn-reset{height:36px;display:inline-flex;align-items:center;gap:6px;padding:0 15px;border-radius:var(--rs);background:rgba(255,255,255,.04);border:1px solid var(--bd);color:var(--dim);font-family:var(--font);font-size:13px;cursor:pointer;transition:all .2s}
+  .btn-reset:hover{background:rgba(255,255,255,.08);color:var(--txt);border-color:var(--bdh)}
+  .btn-save{height:36px;display:inline-flex;align-items:center;gap:7px;padding:0 18px;border-radius:var(--rs);background:linear-gradient(135deg,rgba(100,50,180,.9),rgba(167,139,250,.9));border:none;color:#fff;font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;position:relative;overflow:hidden;transition:all .25s}
+  .btn-save::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(167,139,250,.9),rgba(100,50,180,.9));opacity:0;transition:opacity .25s}
+  .btn-save:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(167,139,250,.35)}
+  .btn-save:hover::before{opacity:1}
+  .btn-save>span{position:relative;z-index:1;display:flex;align-items:center;gap:7px}
+
+  /* Pane display */
+  .perm-pane{display:none}
+  .perm-pane.active{display:block}
+
+  /* Footer */
+  .page-footer{margin-top:32px;padding:16px 24px;border-top:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;background:rgba(5,14,29,.5)}
+  .ft-copy{font-family:var(--mono);font-size:11px;color:var(--muted)}
+  .ft-copy span{color:var(--cyan);opacity:.8}
+  .ft-status{display:flex;align-items:center;gap:5px;font-size:10.5px;color:var(--ok)}
+  .ft-dot{width:6px;height:6px;border-radius:50%;background:var(--ok);box-shadow:0 0 6px var(--ok);animation:dping 2s ease-in-out infinite}
+  .ft-links{display:flex;gap:14px;font-family:var(--mono);font-size:11px}
+  .ft-links a{color:var(--muted);transition:color .2s}.ft-links a:hover{color:var(--cyan)}
+
+  /* FAB */
+  .fab{position:fixed;bottom:28px;right:24px;width:52px;height:52px;z-index:250;border:none;background:none;padding:0;cursor:pointer;opacity:0;visibility:hidden;transform:translateY(20px) scale(.85);transition:opacity .4s var(--ease),visibility .4s,transform .45s cubic-bezier(.34,1.56,.64,1);-webkit-tap-highlight-color:transparent}
+  .fab.visible{opacity:1;visibility:visible;transform:translateY(0) scale(1)}
+  .fab-ring{position:absolute;inset:0;border-radius:50%;background:conic-gradient(var(--purple) 0deg,var(--cyan) 90deg,rgba(80,40,180,.2) 200deg,rgba(80,40,180,.2) 360deg);animation:fspin 2.5s linear infinite}
+  @keyframes fspin{to{transform:rotate(360deg)}}
+  .fab-inner{position:absolute;inset:3px;border-radius:50%;background:linear-gradient(135deg,#071528,#0d1f3c);display:grid;place-items:center;font-size:19px;color:var(--purple);transition:all .3s}
+  .fab:hover .fab-inner{background:linear-gradient(135deg,rgba(100,50,180,.9),var(--purple));color:#fff;box-shadow:0 0 24px rgba(167,139,250,.5)}
+  .fab-orbit{position:absolute;inset:-4px;border-radius:50%;animation:forbit 3s linear infinite}
+  .fab-orbit::after{content:'';position:absolute;top:0;left:50%;width:5px;height:5px;border-radius:50%;background:var(--purple);box-shadow:0 0 7px var(--purple);transform:translateX(-50%);opacity:.8}
+  @keyframes forbit{to{transform:rotate(360deg)}}
+
+  /* ══ Modal ══ */
+  .m-dark .modal-content{background:#050e1d;border-radius:var(--r);color:var(--txt);position:relative;overflow:hidden;box-shadow:0 32px 80px rgba(0,0,0,.7)}
+  .m-p .modal-content{border:1px solid rgba(167,139,250,.25)}
+  .m-r .modal-content{border:1px solid rgba(255,77,109,.25)}
+  .m-hd{display:flex;align-items:center;justify-content:space-between;padding:16px 20px}
+  .m-p .m-hd{border-bottom:1px solid rgba(167,139,250,.12)}
+  .m-r .m-hd{border-bottom:1px solid rgba(255,77,109,.12)}
+  .m-hd-title{display:flex;align-items:center;gap:9px;margin:0;font-size:15px;font-weight:700}
+  .m-p .m-hd-title i{color:var(--purple)}
+  .m-r .m-hd-title i{color:var(--err)}
+  .m-close{width:28px;height:28px;border-radius:6px;border:none;background:rgba(255,255,255,.05);display:grid;place-items:center;cursor:pointer;color:var(--dim);font-size:15px;transition:background .2s,color .2s;flex-shrink:0}
+  .m-close:hover{background:rgba(255,77,109,.12);color:var(--err)}
+  .m-bd{padding:20px;overflow-y:auto}
+  .m-ft{padding:14px 20px;display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap}
+  .m-p .m-ft{border-top:1px solid rgba(167,139,250,.1)}
+  .m-r .m-ft{border-top:1px solid rgba(255,77,109,.1)}
+  .fm-lbl{font-size:11px;font-weight:700;color:var(--dim);font-family:var(--mono);text-transform:uppercase;letter-spacing:.8px;display:block;margin-bottom:6px}
+  .fm-lbl .req{color:var(--err);margin-left:2px}
+  .fmi{width:100%;height:40px;border-radius:var(--rs);background:rgba(0,200,255,.04);border:1px solid var(--bd);padding:0 12px;color:var(--txt);font-family:var(--font);font-size:13px;outline:none;transition:border-color .25s,background .25s}
+  .fmi:focus{border-color:rgba(0,200,255,.35);background:rgba(0,200,255,.07)}
+  .fmi::placeholder{color:var(--muted)}
+  .fmta{width:100%;height:72px;border-radius:var(--rs);background:rgba(0,200,255,.04);border:1px solid var(--bd);padding:9px 12px;color:var(--txt);font-family:var(--font);font-size:13px;outline:none;transition:border-color .25s;resize:none;line-height:1.55}
+  .fmta:focus{border-color:rgba(0,200,255,.35)}
+  .fmta::placeholder{color:var(--muted)}
+  .fmsel{width:100%;height:40px;border-radius:var(--rs);background:rgba(0,200,255,.04);border:1px solid var(--bd);padding:0 28px 0 11px;color:var(--txt);font-family:var(--font);font-size:13px;outline:none;cursor:pointer;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='%237a90a8' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 9px center;transition:border-color .25s}
+  .fmsel:focus{border-color:rgba(0,200,255,.35)}
+  .fmsel option{background:#071528}
+  .form-note{font-size:11px;color:var(--muted);margin-top:4px;font-family:var(--mono)}
+  .m-section{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);padding:12px 0 6px;border-top:1px solid var(--bd);margin-top:10px}
+  .warn-box{display:flex;gap:12px;padding:13px;background:rgba(255,77,109,.05);border:1px solid rgba(255,77,109,.15);border-left:3px solid var(--err);border-radius:var(--rs);margin-bottom:12px}
+  .warn-box>i{font-size:19px;color:var(--err);flex-shrink:0}
+  .warn-box p{font-size:13px;color:var(--dim);line-height:1.6;margin:0}
+  .warn-box p strong{color:var(--txt)}
+  .modal-drain{height:3px;background:rgba(255,77,109,.08);overflow:hidden}
+  .drain-fill{height:100%;width:100%;background:linear-gradient(90deg,var(--err),rgba(255,77,109,.4))}
+  .drain-fill.go{animation:drain 10s linear forwards}
+  @keyframes drain{to{width:0%}}
+  .btn-mcancel{background:rgba(255,255,255,.05);border:1px solid var(--bd);color:var(--dim);font-family:var(--font);font-size:13px;padding:8px 17px;border-radius:var(--rs);cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:6px}
+  .btn-mcancel:hover{background:rgba(255,255,255,.08);color:var(--txt);border-color:var(--bdh)}
+  .btn-msave{background:linear-gradient(135deg,rgba(100,50,180,.9),rgba(167,139,250,.9));border:none;color:#fff;font-family:var(--font);font-size:13px;font-weight:600;padding:8px 20px;border-radius:var(--rs);cursor:pointer;display:flex;align-items:center;gap:6px;position:relative;overflow:hidden;transition:all .25s}
+  .btn-msave::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(167,139,250,.9),rgba(100,50,180,.9));opacity:0;transition:opacity .25s}
+  .btn-msave:hover{transform:translateY(-1px);box-shadow:0 5px 16px rgba(167,139,250,.35)}
+  .btn-msave:hover::before{opacity:1}
+  .btn-msave>span{position:relative;z-index:1;display:flex;align-items:center;gap:6px}
+  .btn-mdel{background:linear-gradient(135deg,rgba(180,30,50,.9),rgba(255,77,109,.85));border:1px solid rgba(255,77,109,.3);color:#fff;font-family:var(--font);font-size:13px;font-weight:600;padding:8px 20px;border-radius:var(--rs);cursor:pointer;display:flex;align-items:center;gap:6px;position:relative;overflow:hidden;transition:all .25s}
+  .btn-mdel::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,77,109,.9),rgba(200,30,60,.9));opacity:0;transition:opacity .25s}
+  .btn-mdel:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(255,77,109,.4)}
+  .btn-mdel:hover::before{opacity:1}
+  .btn-mdel>span{position:relative;z-index:1;display:flex;align-items:center;gap:6px}
+  /* Permission chips in add-role modal */
+  .perm-preset-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:8px}
+  .preset-chip{display:flex;align-items:center;gap:9px;padding:10px 13px;border-radius:var(--rs);background:rgba(0,200,255,.04);border:1px solid var(--bd);cursor:pointer;transition:all .2s}
+  .preset-chip:hover{border-color:var(--bdh);background:rgba(0,200,255,.08)}
+  .preset-chip.sel{border-color:rgba(167,139,250,.35);background:rgba(167,139,250,.1)}
+  .preset-chip input{display:none}
+  .preset-chip-ico{font-size:18px;flex-shrink:0}
+  .preset-chip-nm{font-size:13px;font-weight:600}
+  .preset-chip-sub{font-size:11px;color:var(--muted);font-family:var(--mono);margin-top:1px}
+  /* Color swatch */
+  .color-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+  .csw{width:26px;height:26px;border-radius:6px;cursor:pointer;border:2px solid transparent;transition:all .2s;position:relative}
+  .csw.sel{border-color:#fff;transform:scale(1.15)}
+  .csw::after{content:'✓';position:absolute;inset:0;display:grid;place-items:center;font-size:11px;color:#fff;opacity:0;transition:opacity .2s}
+  .csw.sel::after{opacity:1}
+
+  /* ══ Responsive ══ */
+  @media(max-width:1199.98px){.stat-row{grid-template-columns:repeat(3,1fr)}.ph-lbl{display:none}}
+  @media(max-width:991.98px){
+    .sidebar{transform:translateX(-100%);width:var(--sw-w)!important}
+    .sidebar.sb-open{transform:translateX(0);box-shadow:8px 0 48px rgba(0,0,0,.75)}
+    .sb-overlay.sb-open{display:block}
+    .main-wrap{margin-left:0!important}
+    .tb-search{display:none}
+    .ut-info{display:none}
+    .topbar{padding:0 14px}
+    .page-body{padding:16px 16px 0}
+    .stat-row{gap:10px}
+  }
+  @media(max-width:767.98px){
+    .page-body{padding:12px 12px 0}
+    .pg-hd{flex-direction:column;align-items:flex-start;gap:10px;margin-bottom:16px}
+    .pg-actions{width:100%}
+    .pg-actions .btn-add{width:100%;justify-content:center;height:40px}
+    .stat-row{grid-template-columns:repeat(3,1fr);gap:8px}
+    .sc{padding:12px 12px;gap:9px}
+    .sc-ico{width:36px;height:36px;font-size:16px;border-radius:9px}
+    .sc-val{font-size:18px}
+    .role-tabs{gap:6px}
+    .rtab{padding:7px 12px;gap:6px}
+    .rtab-av{width:26px;height:26px;font-size:10px}
+    .save-bar{flex-direction:column;align-items:stretch}
+    .save-btns{justify-content:flex-end}
+    .page-footer{flex-direction:column;align-items:center;text-align:center;gap:7px}
+    .ft-links{justify-content:center}
+    .scroll-hint-perm{display:flex!important}
+    .perm-scroll{overflow-x:auto}
+  }
+  @media(max-width:575.98px){
+    .page-body{padding:10px 10px 0}
+    .topbar{padding:0 10px;gap:8px}
+    .stat-row{gap:7px}
+    .sc-ico{display:none}
+    .sc{padding:11px 12px}
+    .role-tabs{padding:10px 14px;gap:5px}
+    .rtab{padding:7px 10px;gap:5px}
+    .rtab-cnt{display:none}
+    .rtab-arrow{display:none}
+    .perm-preset-grid{grid-template-columns:1fr}
+    .role-desc-row{flex-direction:column;align-items:flex-start;gap:6px}
+    .rdr-users{margin-left:0}
+    .save-bar{padding:12px 14px}
+    .m-bd{padding:14px}
+    .m-ft{padding:12px 14px}
+    .m-hd{padding:14px}
+    .modal-dialog{margin:8px}
+    .page-footer{flex-direction:column;align-items:center;text-align:center;gap:7px}
+    .ft-links{justify-content:center}
+  }
+</style>
+</head>
+<body>
+<canvas id="bgc"></canvas>
+<aside class="sidebar" id="sidebar">
+  <div class="sb-brand">
+    <div class="sb-logo"><i class="bi bi-diagram-3-fill"></i></div>
+    <div class="sb-title">
+      <span class="name">PMS</span>
+      <span class="sub">Project Management</span>
+    </div>
+  </div>
+
+  <nav class="sb-nav">
+    <div class="nav-section">Master</div>
+    <a class="nav-link" href="dashboard.html" data-tip="Dashboard">
+      <span class="nav-icon"><i class="bi bi-grid-3x3-gap-fill"></i></span>
+      <span class="nav-text">Dashboard</span>
+    </a>
+    <a class="nav-link" href="project.html" data-tip="Project">
+      <span class="nav-icon"><i class="bi bi-kanban-fill"></i></span>
+      <span class="nav-text">Project</span>
+      <span class="nav-badge">12</span>
+    </a>
+    <a class="nav-link" href="dokumen.html" data-tip="Dokumen">
+      <span class="nav-icon"><i class="bi bi-folder2-open"></i></span>
+      <span class="nav-text">Dokumen</span>
+      <span class="nav-badge">48</span>
+    </a>
+    <a class="nav-link" href="#" data-tip="Catatan">
+      <span class="nav-icon"><i class="bi bi-journal-text"></i></span>
+      <span class="nav-text">Catatan</span>
+    </a>
+    <a class="nav-link" href="#" data-tip="Laporan PDF">
+      <span class="nav-icon"><i class="bi bi-file-earmark-pdf-fill"></i></span>
+      <span class="nav-text">Laporan PDF</span>
+    </a>
+    <div class="nav-divider"></div>
+    <div class="nav-section">Management</div>
+    <a class="nav-link" href="#" data-tip="Manajemen Tim">
+      <span class="nav-icon"><i class="bi bi-people-fill"></i></span>
+      <span class="nav-text">Manajemen Tim</span>
+    </a>
+    <a class="nav-link" href="#" data-tip="Kategori Dokumen">
+      <span class="nav-icon"><i class="bi bi-tags-fill"></i></span>
+      <span class="nav-text">Kategori Dokumen</span>
+    </a>
+    <div class="nav-divider"></div>
+    <div class="nav-section">Setting</div>
+    <a class="nav-link" href="user.html" data-tip="Manajemen User">
+      <span class="nav-icon"><i class="bi bi-person-badge-fill"></i></span>
+      <span class="nav-text">Manajemen User</span>
+    </a>
+    <a class="nav-link active" href="role.html" data-tip="Role & Permission">
+      <span class="nav-icon"><i class="bi bi-shield-fill-check"></i></span>
+      <span class="nav-text">Role &amp; Permission</span>
+    </a>
+    <a class="nav-link" href="#" data-tip="Notifikasi">
+      <span class="nav-icon"><i class="bi bi-bell-fill"></i></span>
+      <span class="nav-text">Notifikasi</span>
+      <span class="nav-badge" style="background:rgba(255,77,109,.15);color:var(--err);border-color:rgba(255,77,109,.25)">3</span>
+    </a>
+    <a class="nav-link" href="#" data-tip="Pengaturan">
+      <span class="nav-icon"><i class="bi bi-gear-fill"></i></span>
+      <span class="nav-text">Pengaturan</span>
+    </a>
+  </nav>
+
+  <div class="sb-footer">
+    <div class="sb-user">
+      <div class="sb-av">BS</div>
+      <div class="sb-user-info">
+        <div class="uname">Budi Santoso</div>
+        <div class="urole">Admin</div>
+      </div>
+      <i class="bi bi-chevron-right sb-chev"></i>
+    </div>
+  </div>
+</aside>
+<!-- Overlay for mobile sidebar -->
+<div class="sb-overlay" id="sbOverlay"></div>
+<div class="layout">
+  <div class="main-wrap" id="mainWrap">
+<header class="topbar">
+      <button class="btn-toggle" id="btnToggle" title="Toggle Sidebar">
+        <i class="bi bi-layout-sidebar-inset" id="toggleIcon"></i>
+      </button>
+
+      <div class="tb-crumb d-none d-md-flex">
+        <i class="bi bi-house-fill" style="color:var(--muted)"></i>
+        <span style="opacity:.4">/</span>
+        <a href="dashboard.html">Dashboard</a>
+        <span style="opacity:.4">/</span>
+        <span class="cur">Akses &amp; Role</span>
+      </div>
+
+      <div class="tb-search ms-2">
+        <i class="bi bi-search"></i>
+        <input type="text" placeholder="Cari role..."/>
+      </div>
+
+      <div class="tb-right">
+        <button class="btn-bell" title="Notifikasi">
+          <i class="bi bi-bell-fill"></i>
+          <span class="bell-dot"></span>
+        </button>
+
+        <div style="position:relative">
+          <div class="user-trigger" id="userTrigger">
+            <div class="ut-av">BS</div>
+            <div class="ut-info">
+              <div class="ut-name">Budi Santoso</div>
+              <div class="ut-role">Admin</div>
+            </div>
+            <i class="bi bi-chevron-down ut-arrow"></i>
+          </div>
+          <div class="user-dd" id="userDd">
+            <div class="dd-hd">
+              <div class="dd-av">BS</div>
+              <div>
+                <div class="dd-nm">Budi Santoso</div>
+                <div class="dd-em">budi@pmssystem.id</div>
+                <span class="dd-rl">ADMIN</span>
+              </div>
+            </div>
+            <div class="dd-body">
+              <div class="dd-item"><i class="bi bi-person-circle"></i><span>Profil Saya</span></div>
+              <div class="dd-item"><i class="bi bi-gear-wide-connected"></i><span>Pengaturan</span></div>
+              <div class="dd-sep"></div>
+              <div class="dd-item dng" data-bs-toggle="modal" data-bs-target="#logoutModal">
+                <i class="bi bi-box-arrow-right"></i><span>Logout</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+    <main class="page-body">
+
+      <!-- Page Header -->
+      <div class="pg-hd" data-aos="fade-down">
+        <div class="pg-hd-left">
+          <div class="pg-ico"><i class="bi bi-shield-fill-check"></i></div>
+          <div>
+            <div class="pg-title">Role &amp; Permission</div>
+            <div class="pg-sub">3 role &bull; 13 menu &bull; 65 permission item</div>
+          </div>
+        </div>
+        <div class="pg-actions">
+          <div class="bc d-none d-xl-flex">
+            <a href="dashboard.html"><i class="bi bi-house-fill"></i>&nbsp;Home</a>
+            <span class="sep"><i class="bi bi-chevron-right"></i></span>
+            <span class="here">Role &amp; Permission</span>
+          </div>
+          <button class="btn-add" data-bs-toggle="modal" data-bs-target="#addRoleModal">
+            <span><i class="bi bi-shield-plus"></i> Tambah Role</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Stat Cards -->
+      <div class="stat-row" data-aos="fade-up" data-aos-delay="40">
+        <div class="sc c">
+          <div class="sc-ico c"><i class="bi bi-shield-fill"></i></div>
+          <div><div class="sc-val">3</div><div class="sc-lbl">Total Role</div></div>
+        </div>
+        <div class="sc p">
+          <div class="sc-ico p"><i class="bi bi-key-fill"></i></div>
+          <div><div class="sc-val">65</div><div class="sc-lbl">Total Permission</div></div>
+        </div>
+        <div class="sc g">
+          <div class="sc-ico g"><i class="bi bi-layout-sidebar-inset"></i></div>
+          <div><div class="sc-val">13</div><div class="sc-lbl">Menu Aktif</div></div>
+        </div>
+      </div>
+
+      <!-- Role + Permission Card -->
+      <div class="role-tabs-card" data-aos="fade-up" data-aos-delay="70">
+        <!-- Card header -->
+        <div class="role-tabs-header">
+          <div>
+            <div class="rth-title"><i class="bi bi-shield-fill-check"></i> Konfigurasi Akses Role</div>
+            <div class="rth-sub">Pilih role lalu atur permission read / create / update / delete / menu per halaman</div>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="btn-reset" data-bs-toggle="modal" data-bs-target="#editRoleModal"><i class="bi bi-pencil"></i><span class="d-none d-sm-inline"> Edit Role</span></button>
+            <button class="btn-reset" style="border-color:rgba(255,77,109,.2);color:var(--err)" data-bs-toggle="modal" data-bs-target="#delRoleModal"><i class="bi bi-trash3"></i></button>
+          </div>
+        </div>
+        <!-- Role tabs -->
+        <div class="role-tabs">
+        <div class="rtab active" data-role="admin">
+          <div class="rtab-av" style="background:linear-gradient(135deg,#7f1d1d,#ff4d6d)">A</div>
+          <div>
+            <div class="rtab-nm">Admin</div>
+            <div class="rtab-cnt">1 pengguna</div>
+          </div>
+          <i class="bi bi-chevron-right rtab-arrow"></i>
+        </div>
+        <div class="rtab " data-role="manager">
+          <div class="rtab-av" style="background:linear-gradient(135deg,#78350f,#f59e0b)">M</div>
+          <div>
+            <div class="rtab-nm">Manager</div>
+            <div class="rtab-cnt">3 pengguna</div>
+          </div>
+          <i class="bi bi-chevron-right rtab-arrow"></i>
+        </div>
+        <div class="rtab " data-role="member">
+          <div class="rtab-av" style="background:linear-gradient(135deg,#0c4a6e,#00c8ff)">M</div>
+          <div>
+            <div class="rtab-nm">Member</div>
+            <div class="rtab-cnt">6 pengguna</div>
+          </div>
+          <i class="bi bi-chevron-right rtab-arrow"></i>
+        </div>
+        </div>
+        <!-- Permission panes -->
+        <div class="perm-pane active" id="pane_admin">
+          <div class="role-desc-row">
+            <span class="rdr-badge rd-admin">Admin</span>
+            <span class="rdr-desc"><i class="bi bi-info-circle" style="margin-right:4px;opacity:.5"></i>Akses penuh ke semua fitur</span>
+            <span class="rdr-users"><i class="bi bi-people-fill" style="margin-right:4px"></i>1 pengguna terkait</span>
+          </div>
+          <div class="scroll-hint-perm">
+            <i class="bi bi-arrow-right-short" style="font-size:16px;color:var(--cyan);animation:sh-arrow 1.4s ease-in-out infinite"></i>
+            Geser ke kanan untuk melihat semua permission
+          </div>
+          <div class="perm-scroll">
+            <table class="perm-table">
+              <thead><tr><th class="th-menu">Menu / Halaman</th><th class="ph-c"><i class="bi bi-eye-fill"></i><span class="ph-lbl">Read</span></th><th class="ph-g"><i class="bi bi-plus-circle-fill"></i><span class="ph-lbl">Create</span></th><th class="ph-a"><i class="bi bi-pencil-fill"></i><span class="ph-lbl">Update</span></th><th class="ph-r"><i class="bi bi-trash3-fill"></i><span class="ph-lbl">Delete</span></th><th class="ph-p"><i class="bi bi-layout-sidebar"></i><span class="ph-lbl">Menu</span></th><th class="th-all">Semua</th></tr></thead>
+              <tbody>
+<tr><th class="th-menu">Menu / Halaman</th><th class="ph-c"><i class="bi bi-eye-fill"></i><span class="ph-lbl">Read</span></th><th class="ph-g"><i class="bi bi-plus-circle-fill"></i><span class="ph-lbl">Create</span></th><th class="ph-a"><i class="bi bi-pencil-fill"></i><span class="ph-lbl">Update</span></th><th class="ph-r"><i class="bi bi-trash3-fill"></i><span class="ph-lbl">Delete</span></th><th class="ph-p"><i class="bi bi-layout-sidebar"></i><span class="ph-lbl">Menu</span></th><th class="th-all">Semua</th></tr>
+<tr class="grp-row grp-c"><td colspan="7"><div class="grp-label"><i class="bi bi-database-fill grp-ico grp-ico-c"></i><span>Master Data</span><span class="grp-count">4 menu</span><button class="grp-toggle" data-grp="master_data"><i class="bi bi-chevron-down"></i></button></div></td></tr>
+<tr class="item-row" data-grp="master_data"><td class="td-menu"><span class="menu-dot"></span>Proyek</td><td class="sw-cell"><label class="sw-wrap sw-c" title="Read"><input type="checkbox" id="sw_admin_proyek_read" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-g" title="Create"><input type="checkbox" id="sw_admin_proyek_create" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-a" title="Update"><input type="checkbox" id="sw_admin_proyek_update" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-r" title="Delete"><input type="checkbox" id="sw_admin_proyek_delete" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-p" title="Menu"><input type="checkbox" id="sw_admin_proyek_menu" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-all" title="Toggle semua"><input type="checkbox" id="all_admin_proyek" class="sw-all-cb" data-target="admin_proyek"/><span class="sw-track"></span></label></td></tr>
+<tr class="item-row" data-grp="master_data"><td class="td-menu"><span class="menu-dot"></span>Manajemen Tim</td><td class="sw-cell"><label class="sw-wrap sw-c" title="Read"><input type="checkbox" id="sw_admin_tim_read" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-g" title="Create"><input type="checkbox" id="sw_admin_tim_create" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-a" title="Update"><input type="checkbox" id="sw_admin_tim_update" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-r" title="Delete"><input type="checkbox" id="sw_admin_tim_delete" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-p" title="Menu"><input type="checkbox" id="sw_admin_tim_menu" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-all" title="Toggle semua"><input type="checkbox" id="all_admin_tim" class="sw-all-cb" data-target="admin_tim"/><span class="sw-track"></span></label></td></tr>
+<tr class="item-row" data-grp="master_data"><td class="td-menu"><span class="menu-dot"></span>Dokumen</td><td class="sw-cell"><label class="sw-wrap sw-c" title="Read"><input type="checkbox" id="sw_admin_dokumen_read" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-g" title="Create"><input type="checkbox" id="sw_admin_dokumen_create" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-a" title="Update"><input type="checkbox" id="sw_admin_dokumen_update" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-r" title="Delete"><input type="checkbox" id="sw_admin_dokumen_delete" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-p" title="Menu"><input type="checkbox" id="sw_admin_dokumen_menu" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-all" title="Toggle semua"><input type="checkbox" id="all_admin_dokumen" class="sw-all-cb" data-target="admin_dokumen"/><span class="sw-track"></span></label></td></tr>
+<tr class="item-row" data-grp="master_data"><td class="td-menu"><span class="menu-dot"></span>Catatan / Notulen</td><td class="sw-cell"><label class="sw-wrap sw-c" title="Read"><input type="checkbox" id="sw_admin_catatan_read" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-g" title="Create"><input type="checkbox" id="sw_admin_catatan_create" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-a" title="Update"><input type="checkbox" id="sw_admin_catatan_update" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-r" title="Delete"><input type="checkbox" id="sw_admin_catatan_delete" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-p" title="Menu"><input type="checkbox" id="sw_admin_catatan_menu" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-all" title="Toggle semua"><input type="checkbox" id="all_admin_catatan" class="sw-all-cb" data-target="admin_catatan"/><span class="sw-track"></span></label></td></tr>
+<tr class="grp-row grp-g"><td colspan="7"><div class="grp-label"><i class="bi bi-file-earmark-bar-graph-fill grp-ico grp-ico-g"></i><span>Laporan</span><span class="grp-count">3 menu</span><button class="grp-toggle" data-grp="laporan"><i class="bi bi-chevron-down"></i></button></div></td></tr>
+<tr class="item-row" data-grp="laporan"><td class="td-menu"><span class="menu-dot"></span>Laporan Proyek</td><td class="sw-cell"><label class="sw-wrap sw-c" title="Read"><input type="checkbox" id="sw_admin_laporan_read" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-g" title="Create"><input type="checkbox" id="sw_admin_laporan_create" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-a" title="Update"><input type="checkbox" id="sw_admin_laporan_update" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-r" title="Delete"><input type="checkbox" id="sw_admin_laporan_delete" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-p" title="Menu"><input type="checkbox" id="sw_admin_laporan_menu" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-all" title="Toggle semua"><input type="checkbox" id="all_admin_laporan" class="sw-all-cb" data-target="admin_laporan"/><span class="sw-track"></span></label></td></tr>
+<tr class="item-row" data-grp="laporan"><td class="td-menu"><span class="menu-dot"></span>Export PDF</td><td class="sw-cell"><label class="sw-wrap sw-c" title="Read"><input type="checkbox" id="sw_admin_lap_pdf_read" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-g" title="Create"><input type="checkbox" id="sw_admin_lap_pdf_create" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-a" title="Update"><input type="checkbox" id="sw_admin_lap_pdf_update" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-r" title="Delete"><input type="checkbox" id="sw_admin_lap_pdf_delete" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-p" title="Menu"><input type="checkbox" id="sw_admin_lap_pdf_menu" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-all" title="Toggle semua"><input type="checkbox" id="all_admin_lap_pdf" class="sw-all-cb" data-target="admin_lap_pdf"/><span class="sw-track"></span></label></td></tr>
+<tr class="item-row" data-grp="laporan"><td class="td-menu"><span class="menu-dot"></span>Analitik / Statistik</td><td class="sw-cell"><label class="sw-wrap sw-c" title="Read"><input type="checkbox" id="sw_admin_analitik_read" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-g" title="Create"><input type="checkbox" id="sw_admin_analitik_create" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-a" title="Update"><input type="checkbox" id="sw_admin_analitik_update" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-r" title="Delete"><input type="checkbox" id="sw_admin_analitik_delete" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-p" title="Menu"><input type="checkbox" id="sw_admin_analitik_menu" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-all" title="Toggle semua"><input type="checkbox" id="all_admin_analitik" class="sw-all-cb" data-target="admin_analitik"/><span class="sw-track"></span></label></td></tr>
+<tr class="grp-row grp-a"><td colspan="7"><div class="grp-label"><i class="bi bi-gear-fill grp-ico grp-ico-a"></i><span>Pengaturan</span><span class="grp-count">3 menu</span><button class="grp-toggle" data-grp="pengaturan"><i class="bi bi-chevron-down"></i></button></div></td></tr>
+<tr class="item-row" data-grp="pengaturan"><td class="td-menu"><span class="menu-dot"></span>Manajemen User</td><td class="sw-cell"><label class="sw-wrap sw-c" title="Read"><input type="checkbox" id="sw_admin_user_read" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-g" title="Create"><input type="checkbox" id="sw_admin_user_create" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-a" title="Update"><input type="checkbox" id="sw_admin_user_update" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-r" title="Delete"><input type="checkbox" id="sw_admin_user_delete" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-p" title="Menu"><input type="checkbox" id="sw_admin_user_menu" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-all" title="Toggle semua"><input type="checkbox" id="all_admin_user" class="sw-all-cb" data-target="admin_user"/><span class="sw-track"></span></label></td></tr>
+<tr class="item-row" data-grp="pengaturan"><td class="td-menu"><span class="menu-dot"></span>Role & Permission</td><td class="sw-cell"><label class="sw-wrap sw-c" title="Read"><input type="checkbox" id="sw_admin_role_read" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-g" title="Create"><input type="checkbox" id="sw_admin_role_create" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-a" title="Update"><input type="checkbox" id="sw_admin_role_update" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-r" title="Delete"><input type="checkbox" id="sw_admin_role_delete" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-p" title="Menu"><input type="checkbox" id="sw_admin_role_menu" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-all" title="Toggle semua"><input type="checkbox" id="all_admin_role" class="sw-all-cb" data-target="admin_role"/><span class="sw-track"></span></label></td></tr>
+<tr class="item-row" data-grp="pengaturan"><td class="td-menu"><span class="menu-dot"></span>Notifikasi</td><td class="sw-cell"><label class="sw-wrap sw-c" title="Read"><input type="checkbox" id="sw_admin_notif_read" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-g" title="Create"><input type="checkbox" id="sw_admin_notif_create" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-a" title="Update"><input type="checkbox" id="sw_admin_notif_update" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-r" title="Delete"><input type="checkbox" id="sw_admin_notif_delete" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-p" title="Menu"><input type="checkbox" id="sw_admin_notif_menu" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-all" title="Toggle semua"><input type="checkbox" id="all_admin_notif" class="sw-all-cb" data-target="admin_notif"/><span class="sw-track"></span></label></td></tr>
+<tr class="grp-row grp-p"><td colspan="7"><div class="grp-label"><i class="bi bi-cpu-fill grp-ico grp-ico-p"></i><span>Sistem</span><span class="grp-count">3 menu</span><button class="grp-toggle" data-grp="sistem"><i class="bi bi-chevron-down"></i></button></div></td></tr>
+<tr class="item-row" data-grp="sistem"><td class="td-menu"><span class="menu-dot"></span>Dashboard</td><td class="sw-cell"><label class="sw-wrap sw-c" title="Read"><input type="checkbox" id="sw_admin_dashboard_read" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-g" title="Create"><input type="checkbox" id="sw_admin_dashboard_create" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-a" title="Update"><input type="checkbox" id="sw_admin_dashboard_update" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-r" title="Delete"><input type="checkbox" id="sw_admin_dashboard_delete" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-p" title="Menu"><input type="checkbox" id="sw_admin_dashboard_menu" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-all" title="Toggle semua"><input type="checkbox" id="all_admin_dashboard" class="sw-all-cb" data-target="admin_dashboard"/><span class="sw-track"></span></label></td></tr>
+<tr class="item-row" data-grp="sistem"><td class="td-menu"><span class="menu-dot"></span>Activity Log</td><td class="sw-cell"><label class="sw-wrap sw-c" title="Read"><input type="checkbox" id="sw_admin_log_read" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-g" title="Create"><input type="checkbox" id="sw_admin_log_create" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-a" title="Update"><input type="checkbox" id="sw_admin_log_update" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-r" title="Delete"><input type="checkbox" id="sw_admin_log_delete" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-p" title="Menu"><input type="checkbox" id="sw_admin_log_menu" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-all" title="Toggle semua"><input type="checkbox" id="all_admin_log" class="sw-all-cb" data-target="admin_log"/><span class="sw-track"></span></label></td></tr>
+<tr class="item-row" data-grp="sistem"><td class="td-menu"><span class="menu-dot"></span>Backup & Restore</td><td class="sw-cell"><label class="sw-wrap sw-c" title="Read"><input type="checkbox" id="sw_admin_backup_read" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-g" title="Create"><input type="checkbox" id="sw_admin_backup_create" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-a" title="Update"><input type="checkbox" id="sw_admin_backup_update" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-r" title="Delete"><input type="checkbox" id="sw_admin_backup_delete" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-p" title="Menu"><input type="checkbox" id="sw_admin_backup_menu" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-all" title="Toggle semua"><input type="checkbox" id="all_admin_backup" class="sw-all-cb" data-target="admin_backup"/><span class="sw-track"></span></label></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="save-bar">
+            <div class="save-info"><i class="bi bi-shield-lock-fill"></i>Perubahan hanya berlaku setelah disimpan. Role: <strong style="color:var(--purple)">Admin</strong></div>
+            <div class="save-btns">
+              <button class="btn-reset"><i class="bi bi-arrow-counterclockwise"></i> Reset</button>
+              <button class="btn-save"><span><i class="bi bi-floppy-fill"></i> Simpan Permission</span></button>
+            </div>
+          </div>
+        </div>
+        <div class="perm-pane " id="pane_manager">
+          <div class="role-desc-row">
+            <span class="rdr-badge rd-mgr">Manager</span>
+            <span class="rdr-desc"><i class="bi bi-info-circle" style="margin-right:4px;opacity:.5"></i>Kelola proyek & tim</span>
+            <span class="rdr-users"><i class="bi bi-people-fill" style="margin-right:4px"></i>3 pengguna terkait</span>
+          </div>
+          <div class="scroll-hint-perm">
+            <i class="bi bi-arrow-right-short" style="font-size:16px;color:var(--cyan);animation:sh-arrow 1.4s ease-in-out infinite"></i>
+            Geser ke kanan untuk melihat semua permission
+          </div>
+          <div class="perm-scroll">
+            <table class="perm-table">
+              <thead><tr><th class="th-menu">Menu / Halaman</th><th class="ph-c"><i class="bi bi-eye-fill"></i><span class="ph-lbl">Read</span></th><th class="ph-g"><i class="bi bi-plus-circle-fill"></i><span class="ph-lbl">Create</span></th><th class="ph-a"><i class="bi bi-pencil-fill"></i><span class="ph-lbl">Update</span></th><th class="ph-r"><i class="bi bi-trash3-fill"></i><span class="ph-lbl">Delete</span></th><th class="ph-p"><i class="bi bi-layout-sidebar"></i><span class="ph-lbl">Menu</span></th><th class="th-all">Semua</th></tr></thead>
+              <tbody>
+<tr><th class="th-menu">Menu / Halaman</th><th class="ph-c"><i class="bi bi-eye-fill"></i><span class="ph-lbl">Read</span></th><th class="ph-g"><i class="bi bi-plus-circle-fill"></i><span class="ph-lbl">Create</span></th><th class="ph-a"><i class="bi bi-pencil-fill"></i><span class="ph-lbl">Update</span></th><th class="ph-r"><i class="bi bi-trash3-fill"></i><span class="ph-lbl">Delete</span></th><th class="ph-p"><i class="bi bi-layout-sidebar"></i><span class="ph-lbl">Menu</span></th><th class="th-all">Semua</th></tr>
+<tr class="grp-row grp-c"><td colspan="7"><div class="grp-label"><i class="bi bi-database-fill grp-ico grp-ico-c"></i><span>Master Data</span><span class="grp-count">4 menu</span><button class="grp-toggle" data-grp="master_data"><i class="bi bi-chevron-down"></i></button></div></td></tr>
+<tr class="item-row" data-grp="master_data"><td class="td-menu"><span class="menu-dot"></span>Proyek</td><td class="sw-cell"><label class="sw-wrap sw-c" title="Read"><input type="checkbox" id="sw_manager_proyek_read" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-g" title="Create"><input type="checkbox" id="sw_manager_proyek_create" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-a" title="Update"><input type="checkbox" id="sw_manager_proyek_update" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-r" title="Delete"><input type="checkbox" id="sw_manager_proyek_delete" /><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-p" title="Menu"><input type="checkbox" id="sw_manager_proyek_menu" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-all" title="Toggle semua"><input type="checkbox" id="all_manager_proyek" class="sw-all-cb" data-target="manager_proyek"/><span class="sw-track"></span></label></td></tr>
+<tr class="item-row" data-grp="master_data"><td class="td-menu"><span class="menu-dot"></span>Manajemen Tim</td><td class="sw-cell"><label class="sw-wrap sw-c" title="Read"><input type="checkbox" id="sw_manager_tim_read" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-g" title="Create"><input type="checkbox" id="sw_manager_tim_create" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-a" title="Update"><input type="checkbox" id="sw_manager_tim_update" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-r" title="Delete"><input type="checkbox" id="sw_manager_tim_delete" /><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-p" title="Menu"><input type="checkbox" id="sw_manager_tim_menu" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-all" title="Toggle semua"><input type="checkbox" id="all_manager_tim" class="sw-all-cb" data-target="manager_tim"/><span class="sw-track"></span></label></td></tr>
+<tr class="item-row" data-grp="master_data"><td class="td-menu"><span class="menu-dot"></span>Dokumen</td><td class="sw-cell"><label class="sw-wrap sw-c" title="Read"><input type="checkbox" id="sw_manager_dokumen_read" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-g" title="Create"><input type="checkbox" id="sw_manager_dokumen_create" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-a" title="Update"><input type="checkbox" id="sw_manager_dokumen_update" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-r" title="Delete"><input type="checkbox" id="sw_manager_dokumen_delete" /><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-p" title="Menu"><input type="checkbox" id="sw_manager_dokumen_menu" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-all" title="Toggle semua"><input type="checkbox" id="all_manager_dokumen" class="sw-all-cb" data-target="manager_dokumen"/><span class="sw-track"></span></label></td></tr>
+<tr class="item-row" data-grp="master_data"><td class="td-menu"><span class="menu-dot"></span>Catatan / Notulen</td><td class="sw-cell"><label class="sw-wrap sw-c" title="Read"><input type="checkbox" id="sw_manager_catatan_read" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-g" title="Create"><input type="checkbox" id="sw_manager_catatan_create" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-a" title="Update"><input type="checkbox" id="sw_manager_catatan_update" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-r" title="Delete"><input type="checkbox" id="sw_manager_catatan_delete" /><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-p" title="Menu"><input type="checkbox" id="sw_manager_catatan_menu" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-all" title="Toggle semua"><input type="checkbox" id="all_manager_catatan" class="sw-all-cb" data-target="manager_catatan"/><span class="sw-track"></span></label></td></tr>
+<tr class="grp-row grp-g"><td colspan="7"><div class="grp-label"><i class="bi bi-file-earmark-bar-graph-fill grp-ico grp-ico-g"></i><span>Laporan</span><span class="grp-count">3 menu</span><button class="grp-toggle" data-grp="laporan"><i class="bi bi-chevron-down"></i></button></div></td></tr>
+<tr class="item-row" data-grp="laporan"><td class="td-menu"><span class="menu-dot"></span>Laporan Proyek</td><td class="sw-cell"><label class="sw-wrap sw-c" title="Read"><input type="checkbox" id="sw_manager_laporan_read" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-g" title="Create"><input type="checkbox" id="sw_manager_laporan_create" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-a" title="Update"><input type="checkbox" id="sw_manager_laporan_update" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-r" title="Delete"><input type="checkbox" id="sw_manager_laporan_delete" /><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-p" title="Menu"><input type="checkbox" id="sw_manager_laporan_menu" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-all" title="Toggle semua"><input type="checkbox" id="all_manager_laporan" class="sw-all-cb" data-target="manager_laporan"/><span class="sw-track"></span></label></td></tr>
+<tr class="item-row" data-grp="laporan"><td class="td-menu"><span class="menu-dot"></span>Export PDF</td><td class="sw-cell"><label class="sw-wrap sw-c" title="Read"><input type="checkbox" id="sw_manager_lap_pdf_read" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-g" title="Create"><input type="checkbox" id="sw_manager_lap_pdf_create" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-a" title="Update"><input type="checkbox" id="sw_manager_lap_pdf_update" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-r" title="Delete"><input type="checkbox" id="sw_manager_lap_pdf_delete" /><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-p" title="Menu"><input type="checkbox" id="sw_manager_lap_pdf_menu" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-all" title="Toggle semua"><input type="checkbox" id="all_manager_lap_pdf" class="sw-all-cb" data-target="manager_lap_pdf"/><span class="sw-track"></span></label></td></tr>
+<tr class="item-row" data-grp="laporan"><td class="td-menu"><span class="menu-dot"></span>Analitik / Statistik</td><td class="sw-cell"><label class="sw-wrap sw-c" title="Read"><input type="checkbox" id="sw_manager_analitik_read" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-g" title="Create"><input type="checkbox" id="sw_manager_analitik_create" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-a" title="Update"><input type="checkbox" id="sw_manager_analitik_update" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-r" title="Delete"><input type="checkbox" id="sw_manager_analitik_delete" /><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-p" title="Menu"><input type="checkbox" id="sw_manager_analitik_menu" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-all" title="Toggle semua"><input type="checkbox" id="all_manager_analitik" class="sw-all-cb" data-target="manager_analitik"/><span class="sw-track"></span></label></td></tr>
+<tr class="grp-row grp-a"><td colspan="7"><div class="grp-label"><i class="bi bi-gear-fill grp-ico grp-ico-a"></i><span>Pengaturan</span><span class="grp-count">3 menu</span><button class="grp-toggle" data-grp="pengaturan"><i class="bi bi-chevron-down"></i></button></div></td></tr>
+<tr class="item-row" data-grp="pengaturan"><td class="td-menu"><span class="menu-dot"></span>Manajemen User</td><td class="sw-cell"><label class="sw-wrap sw-c" title="Read"><input type="checkbox" id="sw_manager_user_read" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-g" title="Create"><input type="checkbox" id="sw_manager_user_create" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-a" title="Update"><input type="checkbox" id="sw_manager_user_update" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-r" title="Delete"><input type="checkbox" id="sw_manager_user_delete" /><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-p" title="Menu"><input type="checkbox" id="sw_manager_user_menu" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-all" title="Toggle semua"><input type="checkbox" id="all_manager_user" class="sw-all-cb" data-target="manager_user"/><span class="sw-track"></span></label></td></tr>
+<tr class="item-row" data-grp="pengaturan"><td class="td-menu"><span class="menu-dot"></span>Role & Permission</td><td class="sw-cell"><label class="sw-wrap sw-c" title="Read"><input type="checkbox" id="sw_manager_role_read" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-g" title="Create"><input type="checkbox" id="sw_manager_role_create" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-a" title="Update"><input type="checkbox" id="sw_manager_role_update" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-r" title="Delete"><input type="checkbox" id="sw_manager_role_delete" /><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-p" title="Menu"><input type="checkbox" id="sw_manager_role_menu" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-all" title="Toggle semua"><input type="checkbox" id="all_manager_role" class="sw-all-cb" data-target="manager_role"/><span class="sw-track"></span></label></td></tr>
+<tr class="item-row" data-grp="pengaturan"><td class="td-menu"><span class="menu-dot"></span>Notifikasi</td><td class="sw-cell"><label class="sw-wrap sw-c" title="Read"><input type="checkbox" id="sw_manager_notif_read" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-g" title="Create"><input type="checkbox" id="sw_manager_notif_create" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-a" title="Update"><input type="checkbox" id="sw_manager_notif_update" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-r" title="Delete"><input type="checkbox" id="sw_manager_notif_delete" /><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-p" title="Menu"><input type="checkbox" id="sw_manager_notif_menu" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-all" title="Toggle semua"><input type="checkbox" id="all_manager_notif" class="sw-all-cb" data-target="manager_notif"/><span class="sw-track"></span></label></td></tr>
+<tr class="grp-row grp-p"><td colspan="7"><div class="grp-label"><i class="bi bi-cpu-fill grp-ico grp-ico-p"></i><span>Sistem</span><span class="grp-count">3 menu</span><button class="grp-toggle" data-grp="sistem"><i class="bi bi-chevron-down"></i></button></div></td></tr>
+<tr class="item-row" data-grp="sistem"><td class="td-menu"><span class="menu-dot"></span>Dashboard</td><td class="sw-cell"><label class="sw-wrap sw-c" title="Read"><input type="checkbox" id="sw_manager_dashboard_read" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-g" title="Create"><input type="checkbox" id="sw_manager_dashboard_create" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-a" title="Update"><input type="checkbox" id="sw_manager_dashboard_update" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-r" title="Delete"><input type="checkbox" id="sw_manager_dashboard_delete" /><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-p" title="Menu"><input type="checkbox" id="sw_manager_dashboard_menu" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-all" title="Toggle semua"><input type="checkbox" id="all_manager_dashboard" class="sw-all-cb" data-target="manager_dashboard"/><span class="sw-track"></span></label></td></tr>
+<tr class="item-row" data-grp="sistem"><td class="td-menu"><span class="menu-dot"></span>Activity Log</td><td class="sw-cell"><label class="sw-wrap sw-c" title="Read"><input type="checkbox" id="sw_manager_log_read" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-g" title="Create"><input type="checkbox" id="sw_manager_log_create" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-a" title="Update"><input type="checkbox" id="sw_manager_log_update" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-r" title="Delete"><input type="checkbox" id="sw_manager_log_delete" /><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-p" title="Menu"><input type="checkbox" id="sw_manager_log_menu" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-all" title="Toggle semua"><input type="checkbox" id="all_manager_log" class="sw-all-cb" data-target="manager_log"/><span class="sw-track"></span></label></td></tr>
+<tr class="item-row" data-grp="sistem"><td class="td-menu"><span class="menu-dot"></span>Backup & Restore</td><td class="sw-cell"><label class="sw-wrap sw-c" title="Read"><input type="checkbox" id="sw_manager_backup_read" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-g" title="Create"><input type="checkbox" id="sw_manager_backup_create" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-a" title="Update"><input type="checkbox" id="sw_manager_backup_update" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-r" title="Delete"><input type="checkbox" id="sw_manager_backup_delete" /><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-p" title="Menu"><input type="checkbox" id="sw_manager_backup_menu" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-all" title="Toggle semua"><input type="checkbox" id="all_manager_backup" class="sw-all-cb" data-target="manager_backup"/><span class="sw-track"></span></label></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="save-bar">
+            <div class="save-info"><i class="bi bi-shield-lock-fill"></i>Perubahan hanya berlaku setelah disimpan. Role: <strong style="color:var(--purple)">Manager</strong></div>
+            <div class="save-btns">
+              <button class="btn-reset"><i class="bi bi-arrow-counterclockwise"></i> Reset</button>
+              <button class="btn-save"><span><i class="bi bi-floppy-fill"></i> Simpan Permission</span></button>
+            </div>
+          </div>
+        </div>
+        <div class="perm-pane " id="pane_member">
+          <div class="role-desc-row">
+            <span class="rdr-badge rd-member">Member</span>
+            <span class="rdr-desc"><i class="bi bi-info-circle" style="margin-right:4px;opacity:.5"></i>Akses baca & kontribusi</span>
+            <span class="rdr-users"><i class="bi bi-people-fill" style="margin-right:4px"></i>6 pengguna terkait</span>
+          </div>
+          <div class="scroll-hint-perm">
+            <i class="bi bi-arrow-right-short" style="font-size:16px;color:var(--cyan);animation:sh-arrow 1.4s ease-in-out infinite"></i>
+            Geser ke kanan untuk melihat semua permission
+          </div>
+          <div class="perm-scroll">
+            <table class="perm-table">
+              <thead><tr><th class="th-menu">Menu / Halaman</th><th class="ph-c"><i class="bi bi-eye-fill"></i><span class="ph-lbl">Read</span></th><th class="ph-g"><i class="bi bi-plus-circle-fill"></i><span class="ph-lbl">Create</span></th><th class="ph-a"><i class="bi bi-pencil-fill"></i><span class="ph-lbl">Update</span></th><th class="ph-r"><i class="bi bi-trash3-fill"></i><span class="ph-lbl">Delete</span></th><th class="ph-p"><i class="bi bi-layout-sidebar"></i><span class="ph-lbl">Menu</span></th><th class="th-all">Semua</th></tr></thead>
+              <tbody>
+<tr><th class="th-menu">Menu / Halaman</th><th class="ph-c"><i class="bi bi-eye-fill"></i><span class="ph-lbl">Read</span></th><th class="ph-g"><i class="bi bi-plus-circle-fill"></i><span class="ph-lbl">Create</span></th><th class="ph-a"><i class="bi bi-pencil-fill"></i><span class="ph-lbl">Update</span></th><th class="ph-r"><i class="bi bi-trash3-fill"></i><span class="ph-lbl">Delete</span></th><th class="ph-p"><i class="bi bi-layout-sidebar"></i><span class="ph-lbl">Menu</span></th><th class="th-all">Semua</th></tr>
+<tr class="grp-row grp-c"><td colspan="7"><div class="grp-label"><i class="bi bi-database-fill grp-ico grp-ico-c"></i><span>Master Data</span><span class="grp-count">4 menu</span><button class="grp-toggle" data-grp="master_data"><i class="bi bi-chevron-down"></i></button></div></td></tr>
+<tr class="item-row" data-grp="master_data"><td class="td-menu"><span class="menu-dot"></span>Proyek</td><td class="sw-cell"><label class="sw-wrap sw-c" title="Read"><input type="checkbox" id="sw_member_proyek_read" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-g" title="Create"><input type="checkbox" id="sw_member_proyek_create" /><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-a" title="Update"><input type="checkbox" id="sw_member_proyek_update" /><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-r" title="Delete"><input type="checkbox" id="sw_member_proyek_delete" /><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-p" title="Menu"><input type="checkbox" id="sw_member_proyek_menu" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-all" title="Toggle semua"><input type="checkbox" id="all_member_proyek" class="sw-all-cb" data-target="member_proyek"/><span class="sw-track"></span></label></td></tr>
+<tr class="item-row" data-grp="master_data"><td class="td-menu"><span class="menu-dot"></span>Manajemen Tim</td><td class="sw-cell"><label class="sw-wrap sw-c" title="Read"><input type="checkbox" id="sw_member_tim_read" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-g" title="Create"><input type="checkbox" id="sw_member_tim_create" /><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-a" title="Update"><input type="checkbox" id="sw_member_tim_update" /><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-r" title="Delete"><input type="checkbox" id="sw_member_tim_delete" /><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-p" title="Menu"><input type="checkbox" id="sw_member_tim_menu" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-all" title="Toggle semua"><input type="checkbox" id="all_member_tim" class="sw-all-cb" data-target="member_tim"/><span class="sw-track"></span></label></td></tr>
+<tr class="item-row" data-grp="master_data"><td class="td-menu"><span class="menu-dot"></span>Dokumen</td><td class="sw-cell"><label class="sw-wrap sw-c" title="Read"><input type="checkbox" id="sw_member_dokumen_read" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-g" title="Create"><input type="checkbox" id="sw_member_dokumen_create" /><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-a" title="Update"><input type="checkbox" id="sw_member_dokumen_update" /><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-r" title="Delete"><input type="checkbox" id="sw_member_dokumen_delete" /><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-p" title="Menu"><input type="checkbox" id="sw_member_dokumen_menu" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-all" title="Toggle semua"><input type="checkbox" id="all_member_dokumen" class="sw-all-cb" data-target="member_dokumen"/><span class="sw-track"></span></label></td></tr>
+<tr class="item-row" data-grp="master_data"><td class="td-menu"><span class="menu-dot"></span>Catatan / Notulen</td><td class="sw-cell"><label class="sw-wrap sw-c" title="Read"><input type="checkbox" id="sw_member_catatan_read" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-g" title="Create"><input type="checkbox" id="sw_member_catatan_create" /><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-a" title="Update"><input type="checkbox" id="sw_member_catatan_update" /><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-r" title="Delete"><input type="checkbox" id="sw_member_catatan_delete" /><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-p" title="Menu"><input type="checkbox" id="sw_member_catatan_menu" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-all" title="Toggle semua"><input type="checkbox" id="all_member_catatan" class="sw-all-cb" data-target="member_catatan"/><span class="sw-track"></span></label></td></tr>
+<tr class="grp-row grp-g"><td colspan="7"><div class="grp-label"><i class="bi bi-file-earmark-bar-graph-fill grp-ico grp-ico-g"></i><span>Laporan</span><span class="grp-count">3 menu</span><button class="grp-toggle" data-grp="laporan"><i class="bi bi-chevron-down"></i></button></div></td></tr>
+<tr class="item-row" data-grp="laporan"><td class="td-menu"><span class="menu-dot"></span>Laporan Proyek</td><td class="sw-cell"><label class="sw-wrap sw-c" title="Read"><input type="checkbox" id="sw_member_laporan_read" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-g" title="Create"><input type="checkbox" id="sw_member_laporan_create" /><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-a" title="Update"><input type="checkbox" id="sw_member_laporan_update" /><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-r" title="Delete"><input type="checkbox" id="sw_member_laporan_delete" /><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-p" title="Menu"><input type="checkbox" id="sw_member_laporan_menu" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-all" title="Toggle semua"><input type="checkbox" id="all_member_laporan" class="sw-all-cb" data-target="member_laporan"/><span class="sw-track"></span></label></td></tr>
+<tr class="item-row" data-grp="laporan"><td class="td-menu"><span class="menu-dot"></span>Export PDF</td><td class="sw-cell"><label class="sw-wrap sw-c" title="Read"><input type="checkbox" id="sw_member_lap_pdf_read" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-g" title="Create"><input type="checkbox" id="sw_member_lap_pdf_create" /><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-a" title="Update"><input type="checkbox" id="sw_member_lap_pdf_update" /><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-r" title="Delete"><input type="checkbox" id="sw_member_lap_pdf_delete" /><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-p" title="Menu"><input type="checkbox" id="sw_member_lap_pdf_menu" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-all" title="Toggle semua"><input type="checkbox" id="all_member_lap_pdf" class="sw-all-cb" data-target="member_lap_pdf"/><span class="sw-track"></span></label></td></tr>
+<tr class="item-row" data-grp="laporan"><td class="td-menu"><span class="menu-dot"></span>Analitik / Statistik</td><td class="sw-cell"><label class="sw-wrap sw-c" title="Read"><input type="checkbox" id="sw_member_analitik_read" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-g" title="Create"><input type="checkbox" id="sw_member_analitik_create" /><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-a" title="Update"><input type="checkbox" id="sw_member_analitik_update" /><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-r" title="Delete"><input type="checkbox" id="sw_member_analitik_delete" /><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-p" title="Menu"><input type="checkbox" id="sw_member_analitik_menu" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-all" title="Toggle semua"><input type="checkbox" id="all_member_analitik" class="sw-all-cb" data-target="member_analitik"/><span class="sw-track"></span></label></td></tr>
+<tr class="grp-row grp-a"><td colspan="7"><div class="grp-label"><i class="bi bi-gear-fill grp-ico grp-ico-a"></i><span>Pengaturan</span><span class="grp-count">3 menu</span><button class="grp-toggle" data-grp="pengaturan"><i class="bi bi-chevron-down"></i></button></div></td></tr>
+<tr class="item-row" data-grp="pengaturan"><td class="td-menu"><span class="menu-dot"></span>Manajemen User</td><td class="sw-cell"><label class="sw-wrap sw-c" title="Read"><input type="checkbox" id="sw_member_user_read" /><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-g" title="Create"><input type="checkbox" id="sw_member_user_create" /><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-a" title="Update"><input type="checkbox" id="sw_member_user_update" /><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-r" title="Delete"><input type="checkbox" id="sw_member_user_delete" /><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-p" title="Menu"><input type="checkbox" id="sw_member_user_menu" /><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-all" title="Toggle semua"><input type="checkbox" id="all_member_user" class="sw-all-cb" data-target="member_user"/><span class="sw-track"></span></label></td></tr>
+<tr class="item-row" data-grp="pengaturan"><td class="td-menu"><span class="menu-dot"></span>Role & Permission</td><td class="sw-cell"><label class="sw-wrap sw-c" title="Read"><input type="checkbox" id="sw_member_role_read" /><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-g" title="Create"><input type="checkbox" id="sw_member_role_create" /><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-a" title="Update"><input type="checkbox" id="sw_member_role_update" /><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-r" title="Delete"><input type="checkbox" id="sw_member_role_delete" /><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-p" title="Menu"><input type="checkbox" id="sw_member_role_menu" /><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-all" title="Toggle semua"><input type="checkbox" id="all_member_role" class="sw-all-cb" data-target="member_role"/><span class="sw-track"></span></label></td></tr>
+<tr class="item-row" data-grp="pengaturan"><td class="td-menu"><span class="menu-dot"></span>Notifikasi</td><td class="sw-cell"><label class="sw-wrap sw-c" title="Read"><input type="checkbox" id="sw_member_notif_read" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-g" title="Create"><input type="checkbox" id="sw_member_notif_create" /><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-a" title="Update"><input type="checkbox" id="sw_member_notif_update" /><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-r" title="Delete"><input type="checkbox" id="sw_member_notif_delete" /><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-p" title="Menu"><input type="checkbox" id="sw_member_notif_menu" /><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-all" title="Toggle semua"><input type="checkbox" id="all_member_notif" class="sw-all-cb" data-target="member_notif"/><span class="sw-track"></span></label></td></tr>
+<tr class="grp-row grp-p"><td colspan="7"><div class="grp-label"><i class="bi bi-cpu-fill grp-ico grp-ico-p"></i><span>Sistem</span><span class="grp-count">3 menu</span><button class="grp-toggle" data-grp="sistem"><i class="bi bi-chevron-down"></i></button></div></td></tr>
+<tr class="item-row" data-grp="sistem"><td class="td-menu"><span class="menu-dot"></span>Dashboard</td><td class="sw-cell"><label class="sw-wrap sw-c" title="Read"><input type="checkbox" id="sw_member_dashboard_read" checked/><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-g" title="Create"><input type="checkbox" id="sw_member_dashboard_create" /><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-a" title="Update"><input type="checkbox" id="sw_member_dashboard_update" /><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-r" title="Delete"><input type="checkbox" id="sw_member_dashboard_delete" /><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-p" title="Menu"><input type="checkbox" id="sw_member_dashboard_menu" /><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-all" title="Toggle semua"><input type="checkbox" id="all_member_dashboard" class="sw-all-cb" data-target="member_dashboard"/><span class="sw-track"></span></label></td></tr>
+<tr class="item-row" data-grp="sistem"><td class="td-menu"><span class="menu-dot"></span>Activity Log</td><td class="sw-cell"><label class="sw-wrap sw-c" title="Read"><input type="checkbox" id="sw_member_log_read" /><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-g" title="Create"><input type="checkbox" id="sw_member_log_create" /><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-a" title="Update"><input type="checkbox" id="sw_member_log_update" /><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-r" title="Delete"><input type="checkbox" id="sw_member_log_delete" /><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-p" title="Menu"><input type="checkbox" id="sw_member_log_menu" /><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-all" title="Toggle semua"><input type="checkbox" id="all_member_log" class="sw-all-cb" data-target="member_log"/><span class="sw-track"></span></label></td></tr>
+<tr class="item-row" data-grp="sistem"><td class="td-menu"><span class="menu-dot"></span>Backup & Restore</td><td class="sw-cell"><label class="sw-wrap sw-c" title="Read"><input type="checkbox" id="sw_member_backup_read" /><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-g" title="Create"><input type="checkbox" id="sw_member_backup_create" /><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-a" title="Update"><input type="checkbox" id="sw_member_backup_update" /><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-r" title="Delete"><input type="checkbox" id="sw_member_backup_delete" /><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-p" title="Menu"><input type="checkbox" id="sw_member_backup_menu" /><span class="sw-track"></span></label></td><td class="sw-cell"><label class="sw-wrap sw-all" title="Toggle semua"><input type="checkbox" id="all_member_backup" class="sw-all-cb" data-target="member_backup"/><span class="sw-track"></span></label></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="save-bar">
+            <div class="save-info"><i class="bi bi-shield-lock-fill"></i>Perubahan hanya berlaku setelah disimpan. Role: <strong style="color:var(--purple)">Member</strong></div>
+            <div class="save-btns">
+              <button class="btn-reset"><i class="bi bi-arrow-counterclockwise"></i> Reset</button>
+              <button class="btn-save"><span><i class="bi bi-floppy-fill"></i> Simpan Permission</span></button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+<footer class="page-footer">
+      <div class="ft-copy">&copy; 2025 <span>Project Management System</span> &mdash; v2.0.0</div>
+      <div class="ft-status"><span class="ft-dot"></span>Semua sistem berjalan normal</div>
+      <div class="ft-links"><a href="#">Dokumentasi</a><a href="#">Kebijakan</a><a href="#">Support</a></div>
+    </footer>
+  </div>
+</div>
+
+<button class="fab" id="fab" aria-label="Kembali ke atas">
+  <div class="fab-ring"></div><div class="fab-orbit"></div>
+  <div class="fab-inner"><i class="bi bi-chevron-up"></i></div>
+</button>
+
+<style>@keyframes sh-arrow{0%,100%{transform:translateX(0)}50%{transform:translateX(5px)}}</style>
+
+
+<!-- ── MODAL TAMBAH ROLE ─────────────────────────── -->
+<div class="modal fade m-dark m-p" id="addRoleModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-md modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="m-hd">
+        <h5 class="m-hd-title"><i class="bi bi-shield-plus"></i> Tambah Role Baru</h5>
+        <button class="m-close" data-bs-dismiss="modal"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <div class="m-bd" style="max-height:calc(80vh - 130px)">
+        <div class="m-section" style="border-top:none;padding-top:0;margin-top:0">Identitas Role</div>
+        <div class="row g-3 mt-0">
+          <div class="col-12">
+            <label class="fm-lbl">Nama Role <span class="req">*</span></label>
+            <input type="text" class="fmi" placeholder="Contoh: Supervisor, QA, Viewer..."/>
+            <div class="form-note">Gunakan nama yang deskriptif dan mudah dipahami.</div>
+          </div>
+          <div class="col-12">
+            <label class="fm-lbl">Deskripsi</label>
+            <textarea class="fmta" placeholder="Jelaskan fungsi dan tanggung jawab role ini..."></textarea>
+          </div>
+          <div class="col-12 col-sm-6">
+            <label class="fm-lbl">Guard</label>
+            <select class="fmsel">
+              <option>web</option>
+              <option>api</option>
+            </select>
+            <div class="form-note">Pilih "web" untuk akses dashboard browser.</div>
+          </div>
+          <div class="col-12 col-sm-6">
+            <label class="fm-lbl">Warna Role</label>
+            <div class="color-row">
+              <div class="csw sel" style="background:#ff4d6d" data-color="red" title="Merah"></div>
+              <div class="csw" style="background:#f59e0b" data-color="amber" title="Amber"></div>
+              <div class="csw" style="background:#00c8ff" data-color="cyan" title="Cyan"></div>
+              <div class="csw" style="background:#00e5a0" data-color="green" title="Hijau"></div>
+              <div class="csw" style="background:#a78bfa" data-color="purple" title="Ungu"></div>
+              <div class="csw" style="background:#fb923c" data-color="orange" title="Oranye"></div>
+            </div>
+          </div>
+        </div>
+        <div class="m-section">Template Permission (Opsional)</div>
+        <div class="form-note" style="margin-bottom:10px">Pilih template awal untuk mempercepat konfigurasi permission role baru.</div>
+        <div class="perm-preset-grid">
+          <label class="preset-chip sel">
+            <input type="radio" name="preset" value="full" checked/>
+            <span class="preset-chip-ico">🛡️</span>
+            <div><div class="preset-chip-nm">Akses Penuh</div><div class="preset-chip-sub">Semua permission aktif</div></div>
+          </label>
+          <label class="preset-chip">
+            <input type="radio" name="preset" value="manager"/>
+            <span class="preset-chip-ico">📋</span>
+            <div><div class="preset-chip-nm">Manager</div><div class="preset-chip-sub">Read + Create + Update</div></div>
+          </label>
+          <label class="preset-chip">
+            <input type="radio" name="preset" value="readonly"/>
+            <span class="preset-chip-ico">👁️</span>
+            <div><div class="preset-chip-nm">Read Only</div><div class="preset-chip-sub">Hanya bisa melihat data</div></div>
+          </label>
+          <label class="preset-chip">
+            <input type="radio" name="preset" value="custom"/>
+            <span class="preset-chip-ico">⚙️</span>
+            <div><div class="preset-chip-nm">Kustom</div><div class="preset-chip-sub">Tanpa permission awal</div></div>
+          </label>
+        </div>
+        <div class="m-section">Pengaturan Lanjutan</div>
+        <div class="row g-3">
+          <div class="col-12 col-sm-6">
+            <label class="fm-lbl">Level Prioritas</label>
+            <select class="fmsel">
+              <option>1 — Tertinggi</option>
+              <option selected>5 — Menengah</option>
+              <option>10 — Terendah</option>
+            </select>
+            <div class="form-note">Semakin kecil angka, semakin tinggi prioritasnya.</div>
+          </div>
+          <div class="col-12 col-sm-6">
+            <label class="fm-lbl">Salin dari Role</label>
+            <select class="fmsel">
+              <option value="">— Tidak disalin —</option>
+              <option>Admin</option>
+              <option>Manager</option>
+              <option>Member</option>
+            </select>
+            <div class="form-note">Salin semua permission dari role yang dipilih.</div>
+          </div>
+        </div>
+      </div>
+      <div class="m-ft">
+        <button class="btn-mcancel" data-bs-dismiss="modal"><i class="bi bi-x-lg"></i> Batal</button>
+        <button class="btn-msave"><span><i class="bi bi-shield-plus"></i> Buat Role</span></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL EDIT ROLE ────────────────────────────── -->
+<div class="modal fade m-dark m-p" id="editRoleModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-md modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="m-hd">
+        <h5 class="m-hd-title"><i class="bi bi-pencil-square"></i> Edit Role</h5>
+        <button class="m-close" data-bs-dismiss="modal"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <div class="m-bd" style="max-height:calc(80vh - 130px)">
+        <div class="m-section" style="border-top:none;padding-top:0;margin-top:0">Identitas Role</div>
+        <div class="row g-3 mt-0">
+          <div class="col-12">
+            <label class="fm-lbl">Nama Role <span class="req">*</span></label>
+            <input type="text" class="fmi" value="Manager"/>
+          </div>
+          <div class="col-12">
+            <label class="fm-lbl">Deskripsi</label>
+            <textarea class="fmta">Kelola proyek dan tim, akses laporan, dan koordinasi anggota tim.</textarea>
+          </div>
+          <div class="col-12 col-sm-6">
+            <label class="fm-lbl">Guard</label>
+            <select class="fmsel"><option selected>web</option><option>api</option></select>
+          </div>
+          <div class="col-12 col-sm-6">
+            <label class="fm-lbl">Level Prioritas</label>
+            <select class="fmsel">
+              <option>1 — Tertinggi</option>
+              <option selected>5 — Menengah</option>
+              <option>10 — Terendah</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="m-ft">
+        <button class="btn-mcancel" data-bs-dismiss="modal"><i class="bi bi-x-lg"></i> Batal</button>
+        <button class="btn-msave"><span><i class="bi bi-floppy-fill"></i> Simpan</span></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL HAPUS ROLE ──────────────────────────── -->
+<div class="modal fade m-dark m-r" id="delRoleModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="m-hd">
+        <h5 class="m-hd-title"><i class="bi bi-trash3-fill"></i> Hapus Role</h5>
+        <button class="m-close" data-bs-dismiss="modal"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <div class="m-bd">
+        <div class="warn-box">
+          <i class="bi bi-exclamation-triangle-fill"></i>
+          <p>Anda akan menghapus role <strong id="delRoleNm">ini</strong>. Semua permission terkait dan assignment ke user akan ikut terhapus. User yang memiliki role ini akan kehilangan aksesnya.</p>
+        </div>
+        <p style="font-size:12px;color:var(--muted);font-family:var(--mono)"><i class="bi bi-info-circle"></i>&nbsp;Pastikan tidak ada user aktif dengan role ini sebelum menghapus.</p>
+      </div>
+      <div class="m-ft">
+        <button class="btn-mcancel" data-bs-dismiss="modal"><i class="bi bi-x-lg"></i> Batalkan</button>
+        <button class="btn-mdel"><span><i class="bi bi-trash3-fill"></i> Ya, Hapus Role</span></button>
+      </div>
+      <div class="modal-drain"><div class="drain-fill" id="drainDel"></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL LOGOUT ─────────────────────────────── -->
+<div class="modal fade m-dark m-r" id="logoutModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="m-hd">
+        <h5 class="m-hd-title"><i class="bi bi-box-arrow-right"></i> Konfirmasi Logout</h5>
+        <button class="m-close" data-bs-dismiss="modal"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <div class="m-bd">
+        <div class="warn-box">
+          <i class="bi bi-exclamation-triangle-fill"></i>
+          <p>Apakah Anda yakin ingin <strong>keluar dari sistem</strong>? Semua sesi aktif akan diakhiri.</p>
+        </div>
+      </div>
+      <div class="m-ft">
+        <button class="btn-mcancel" data-bs-dismiss="modal"><i class="bi bi-x-lg"></i> Batalkan</button>
+        <button class="btn-mdel"><span><i class="bi bi-box-arrow-right"></i> Ya, Logout</span></button>
+      </div>
+      <div class="modal-drain"><div class="drain-fill" id="drainLogout"></div></div>
+    </div>
+  </div>
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
+<script>
+AOS.init({once:true,easing:'ease-out-cubic',duration:520,offset:20});
+
+/* Canvas */
+(function(){
+  var cv=document.getElementById('bgc'),ctx=cv.getContext('2d'),W,H,ns=[];
+  var C=['rgba(0,200,255,','rgba(0,114,198,','rgba(167,139,250,'];
+  function init(){W=cv.width=innerWidth;H=cv.height=innerHeight;ns=[];var n=Math.max(14,Math.floor(W*H/34000));for(var i=0;i<n;i++)ns.push({x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*.28,vy:(Math.random()-.5)*.28,r:Math.random()*1.8+.7,c:C[~~(Math.random()*3)],p:Math.random()*6.28});}
+  function draw(){ctx.clearRect(0,0,W,H);ns.forEach(function(n){n.x+=n.vx;n.y+=n.vy;n.p+=.014;if(n.x<-8)n.x=W+8;if(n.x>W+8)n.x=-8;if(n.y<-8)n.y=H+8;if(n.y>H+8)n.y=-8;});for(var i=0;i<ns.length;i++)for(var j=i+1;j<ns.length;j++){var a=ns[i],b=ns[j],dx=a.x-b.x,dy=a.y-b.y,d=Math.sqrt(dx*dx+dy*dy);if(d<130){ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.strokeStyle='rgba(100,80,200,'+(1-d/130)*.12+')';ctx.lineWidth=.6;ctx.stroke();}}
+  ns.forEach(function(n){var a=.38+Math.sin(n.p)*.28;ctx.beginPath();ctx.arc(n.x,n.y,n.r*(.85+Math.sin(n.p)*.15),0,6.28);ctx.fillStyle=n.c+a+')';ctx.fill();});requestAnimationFrame(draw);}
+  window.addEventListener('resize',init,{passive:true});init();draw();
+})();
+
+/* Sidebar */
+var sb=document.getElementById('sidebar'),mw=document.getElementById('mainWrap'),
+    ov=document.getElementById('sbOverlay'),tbt=document.getElementById('btnToggle'),
+    tbi=document.getElementById('toggleIcon'),col=false;
+function isMob(){return window.innerWidth<992;}
+function openSB(){sb.classList.add('sb-open');ov.classList.add('sb-open');ov.style.display='block';document.body.style.overflow='hidden';}
+function closeSB(){sb.classList.remove('sb-open');ov.classList.remove('sb-open');ov.style.display='';document.body.style.overflow='';}
+tbt.addEventListener('click',function(){if(isMob()){sb.classList.contains('sb-open')?closeSB():openSB();}else{col=!col;sb.classList.toggle('collapsed',col);mw.classList.toggle('sb-expanded',col);tbi.className=col?'bi bi-layout-sidebar':'bi bi-layout-sidebar-inset';}});
+ov.addEventListener('click',closeSB);
+window.addEventListener('resize',function(){if(!isMob())closeSB();},{passive:true});
+
+/* User dropdown */
+var ut=document.getElementById('userTrigger'),ud=document.getElementById('userDd');
+ut.addEventListener('click',function(){var o=ud.classList.toggle('open');ut.classList.toggle('open',o);});
+document.addEventListener('click',function(e){if(!ut.contains(e.target)&&!ud.contains(e.target)){ud.classList.remove('open');ut.classList.remove('open');}});
+
+/* FAB */
+var fab=document.getElementById('fab'),tk=false;
+window.addEventListener('scroll',function(){if(!tk){requestAnimationFrame(function(){fab.classList.toggle('visible',scrollY>300);tk=false;});tk=true;}},{passive:true});
+fab.addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});});
+
+/* Role tabs switching */
+document.querySelectorAll('.rtab').forEach(function(tab){
+  tab.addEventListener('click',function(){
+    document.querySelectorAll('.rtab').forEach(function(t){t.classList.remove('active');});
+    this.classList.add('active');
+    var role=this.dataset.role;
+    document.querySelectorAll('.perm-pane').forEach(function(p){p.classList.remove('active');});
+    var pane=document.getElementById('pane_'+role);
+    if(pane)pane.classList.add('active');
+  });
+});
+
+/* Group collapse toggle */
+document.querySelectorAll('.grp-label').forEach(function(label){
+  label.addEventListener('click',function(){
+    var btn=this.querySelector('.grp-toggle');
+    var grp=btn.dataset.grp;
+    var rows=document.querySelectorAll('.item-row[data-grp="'+grp+'"]');
+    var collapsed=btn.classList.toggle('collapsed');
+    rows.forEach(function(r){r.classList.toggle('hidden',collapsed);});
+  });
+});
+// Wire data-grp from th group-toggle button
+document.querySelectorAll('.grp-toggle').forEach(function(btn){
+  btn.addEventListener('click',function(e){
+    e.stopPropagation(); // label click handles it
+  });
+});
+
+/* All-switch: toggle all 5 permission switches for a row */
+document.querySelectorAll('.sw-all-cb').forEach(function(cb){
+  cb.addEventListener('change',function(){
+    var target=this.dataset.target; // e.g. "admin_proyek"
+    var checked=this.checked;
+    var parts=target.split('_');
+    var role=parts[0], key=parts.slice(1).join('_');
+    ['read','create','update','delete','menu'].forEach(function(p){
+      var sw=document.getElementById('sw_'+role+'_'+key+'_'+p);
+      if(sw)sw.checked=checked;
+    });
+  });
+});
+
+/* Drain modals */
+function initDrain(mid,fid){
+  var m=document.getElementById(mid);if(!m)return;
+  m.addEventListener('show.bs.modal',function(){var f=document.getElementById(fid);if(!f)return;f.classList.remove('go');void f.offsetWidth;f.classList.add('go');});
+  m.addEventListener('hidden.bs.modal',function(){var f=document.getElementById(fid);if(f)f.classList.remove('go');});
+}
+initDrain('delRoleModal','drainDel');
+initDrain('logoutModal','drainLogout');
+
+/* Color swatch toggle */
+document.querySelectorAll('.csw').forEach(function(sw){
+  sw.addEventListener('click',function(){
+    this.closest('.color-row').querySelectorAll('.csw').forEach(function(s){s.classList.remove('sel');});
+    this.classList.add('sel');
+  });
+});
+
+/* Preset chip toggle */
+document.querySelectorAll('.preset-chip').forEach(function(chip){
+  chip.addEventListener('click',function(){
+    document.querySelectorAll('.preset-chip').forEach(function(c){c.classList.remove('sel');});
+    this.classList.add('sel');
+  });
+});
+
+/* Save bar reset/save feedback */
+document.querySelectorAll('.btn-save').forEach(function(btn){
+  btn.addEventListener('click',function(){
+    var orig=btn.innerHTML;
+    btn.innerHTML='<span><i class="bi bi-check-circle-fill"></i> Tersimpan!</span>';
+    btn.style.background='linear-gradient(135deg,#064e3b,#00e5a0)';
+    setTimeout(function(){btn.innerHTML=orig;btn.style.background='';},2200);
+  });
+});
+document.querySelectorAll('.btn-reset').forEach(function(btn){
+  btn.addEventListener('click',function(){
+    var pane=btn.closest('.perm-pane');
+    if(pane)pane.querySelectorAll('input[type=checkbox]').forEach(function(cb){cb.checked=false;});
+  });
+});
+</script>
+</body>
+</html>
